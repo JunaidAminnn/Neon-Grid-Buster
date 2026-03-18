@@ -64,12 +64,11 @@ struct GameView: View {
                     Button {
                         showSettings = true
                     } label: {
-                        Theme.Palette.goldDeep
-                            .mask(
-                                Image(systemName: "gearshape.fill")
-                                    .resizable()
-                                    .scaledToFit()
-                            )
+                        Image(systemName: "gearshape.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .symbolRenderingMode(.monochrome)
+                            .foregroundStyle(Theme.Palette.goldDeep)
                             .frame(width: 20, height: 20)
                             .frame(width: 44, height: 44)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -121,12 +120,11 @@ private struct BestScorePill: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Theme.Palette.goldDeep
-                .mask(
-                    Image(systemName: "crown.fill")
-                        .resizable()
-                        .scaledToFit()
-                )
+            Image(systemName: "crown.fill")
+                .resizable()
+                .scaledToFit()
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(Theme.Palette.goldDeep)
                 .frame(width: 20, height: 20)
                 .shadow(color: Theme.Palette.goldDeep.opacity(0.20), radius: 10, x: 0, y: 4)
 
@@ -155,12 +153,11 @@ private struct CurrentScoreHeart: View {
                 .frame(width: 98, height: 98)
                 .blur(radius: 18)
 
-            Theme.Palette.neonRed
-                .mask(
-                    Image(systemName: "heart.fill")
-                        .resizable()
-                        .scaledToFit()
-                )
+            Image(systemName: "heart.fill")
+                .resizable()
+                .scaledToFit()
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(Theme.Palette.neonRed)
                 .frame(width: 110, height: 102)
                 .shadow(color: Theme.Palette.neonRed.opacity(0.50), radius: 24, x: 0, y: 10)
                 .symbolEffect(.pulse, value: pulse)
@@ -294,13 +291,11 @@ private struct ScoreRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            tint
-                .mask(
-                    Image(systemName: icon)
-                        .resizable()
-                        .scaledToFit()
-                        .font(.system(size: 15, weight: .black))
-                )
+            Image(systemName: icon)
+                .resizable()
+                .scaledToFit()
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(tint)
                 .frame(width: 30, height: 30)
                 .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 

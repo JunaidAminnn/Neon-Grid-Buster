@@ -7,61 +7,67 @@ import SwiftUI
 
 struct MainMenuView: View {
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ArcadeBlueBackgroundView()
+        ZStack {
+            Theme.Palette.midnight
+                .ignoresSafeArea()
 
-                GeometryReader { geo in
-                    VStack(spacing: 0) {
-                        Spacer(minLength: geo.size.height * 0.09)
+            NavigationStack {
+                ZStack {
+                    ArcadeBlueBackgroundView()
 
-                        NeonLogoView()
+                    GeometryReader { geo in
+                        VStack(spacing: 0) {
+                            Spacer(minLength: geo.size.height * 0.09)
 
-                        Spacer(minLength: geo.size.height * 0.16)
+                            NeonLogoView()
 
-                        VStack(spacing: 14) {
-                            Text("NEON MIDNIGHT EDITION")
-                                .font(Theme.Fonts.arcade(14))
-                                .foregroundStyle(.white.opacity(0.60))
-                                .padding(.bottom, 4)
+                            Spacer(minLength: geo.size.height * 0.16)
 
-                            NavigationLink {
-                                GameView(mode: .adventure)
-                            } label: {
-                                ModeButton(
-                                    title: "Adventure",
-                                    systemIcon: "clock",
-                                    fill: LinearGradient(
-                                        colors: [Color(red: 1.0, green: 0.72, blue: 0.10), Color(red: 1.0, green: 0.56, blue: 0.02)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                            VStack(spacing: 14) {
+                                Text("NEON MIDNIGHT EDITION")
+                                    .font(Theme.Fonts.arcade(14))
+                                    .foregroundStyle(.white.opacity(0.60))
+                                    .padding(.bottom, 4)
+
+                                NavigationLink {
+                                    GameView(mode: .adventure)
+                                } label: {
+                                    ModeButton(
+                                        title: "Adventure",
+                                        systemIcon: "clock",
+                                        fill: LinearGradient(
+                                            colors: [Color(red: 1.0, green: 0.72, blue: 0.10), Color(red: 1.0, green: 0.56, blue: 0.02)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
-                            }
+                                }
 
-                            NavigationLink {
-                                GameView(mode: .classic)
-                            } label: {
-                                ModeButton(
-                                    title: "Classic",
-                                    systemIcon: "infinity",
-                                    fill: LinearGradient(
-                                        colors: [Color(red: 0.15, green: 0.88, blue: 0.72), Color(red: 0.06, green: 0.72, blue: 0.60)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
+                                NavigationLink {
+                                    GameView(mode: .classic)
+                                } label: {
+                                    ModeButton(
+                                        title: "Classic",
+                                        systemIcon: "infinity",
+                                        fill: LinearGradient(
+                                            colors: [Color(red: 0.15, green: 0.88, blue: 0.72), Color(red: 0.06, green: 0.72, blue: 0.60)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
                                     )
-                                )
+                                }
                             }
+                            .padding(.horizontal, 22)
+                            .padding(.bottom, geo.size.height * 0.14)
+
+                            Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, 22)
-                        .padding(.bottom, geo.size.height * 0.14)
-
-                        Spacer(minLength: 0)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .navigationBarHidden(true)
+                .toolbarBackground(.hidden, for: .navigationBar)
             }
-            .navigationBarHidden(true)
         }
     }
 }

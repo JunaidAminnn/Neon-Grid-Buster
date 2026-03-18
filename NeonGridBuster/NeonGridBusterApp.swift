@@ -6,13 +6,25 @@
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct NeonGridBusterApp: App {
+    init() {
+        UIView.appearance(whenContainedInInstancesOf: [UIHostingController<MainMenuView>.self]).backgroundColor = .black
+        UIView.appearance(whenContainedInInstancesOf: [UIHostingController<GameView>.self]).backgroundColor = .black
+    }
+
     var body: some Scene {
         WindowGroup {
-            MainMenuView()
-                .tint(Theme.Palette.neonCyan)
+            ZStack {
+                Theme.Palette.midnight
+                    .ignoresSafeArea()
+
+                MainMenuView()
+            }
+            .tint(Theme.Palette.neonCyan)
+            .preferredColorScheme(.dark)
         }
     }
 }
