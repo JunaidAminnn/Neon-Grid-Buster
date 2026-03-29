@@ -2,11 +2,19 @@
 //  GameView.swift
 //  NeonGridBuster
 //
+//  Prompt 4.1 — Classic Gameplay UI (clone of image_4.png).
+//  ─────────────────────────────────────────────────────────────────────────
+//  Layout (top → bottom on solid #000000 background):
+//    [Crown + Best]  |  [Large pink score — centre]  |  [Gear]
+//    SpriteKit game board (fills remaining height)
+//  ─────────────────────────────────────────────────────────────────────────
 
 import SwiftUI
 import SpriteKit
 import Combine
 import UIKit
+
+// MARK: - GameMode
 
 enum GameMode: String, Hashable {
     case adventure
@@ -15,10 +23,42 @@ enum GameMode: String, Hashable {
     var title: String {
         switch self {
         case .adventure: return "Adventure"
-        case .classic: return "Classic"
+        case .classic:   return "Classic"
         }
     }
 }
+
+// MARK: - GameTheme
+// Global colour-set variable (Prompt 4.1). Currently "Neon Midnight" = cyan / magenta.
+// Swap .neonMidnight for a future theme to change all placed-block colours at once.
+enum GameTheme: String, CaseIterable {
+    case neonMidnight   // default: cyan fill, magenta accents
+    case synthwave      // future: purple fill, orange accents
+    case acidGreen      // future: lime fill, pink accents
+
+    /// Primary block fill colour for this theme.
+    var primaryNeonColor: NeonColor {
+        switch self {
+        case .neonMidnight: return .cyan
+        case .synthwave:    return .purple
+        case .acidGreen:    return .lime
+        }
+    }
+
+    /// Secondary accent colour used for score text and gear icon.
+    var accentNeonColor: NeonColor {
+        switch self {
+        case .neonMidnight: return .pink
+        case .synthwave:    return .orange
+        case .acidGreen:    return .pink
+        }
+    }
+}
+
+/// Shared app-level theme. Change this once to reskin the whole game.
+let activeGameTheme: GameTheme = .neonMidnight
+
+// MARK: - GameContainer
 
 @MainActor
 final class GameContainer: ObservableObject {
@@ -26,298 +66,370 @@ final class GameContainer: ObservableObject {
     let scene: GameScene
     private var cancellable: AnyCancellable?
 
-    init() {
-        scene = GameScene(scoreManager: scoreManager)
+    init(adventurePreset: [[NeonColor?]]? = nil) {
+        scene = GameScene(scoreManager: scoreManager, adventurePreset: adventurePreset)
         cancellable = scoreManager.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
         }
     }
 }
 
+// MARK: - GameView
+
 struct GameView: View {
     let mode: GameMode
 
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var container = GameContainer()
+    @StateObject private var container: GameContainer
 
     @AppStorage("settings.hapticsEnabled") private var hapticsEnabled: Bool = true
-    @AppStorage("settings.ghostEnabled") private var ghostEnabled: Bool = true
+    @AppStorage("settings.ghostEnabled")   private var ghostEnabled:   Bool = true
 
     @State private var showSettings: Bool = false
+    @State private var scoreScale:   CGFloat = 1.0
+
+    init(mode: GameMode, adventurePreset: [[NeonColor?]]? = nil) {
+        self.mode = mode
+        _container = StateObject(wrappedValue: GameContainer(adventurePreset: adventurePreset))
+    }
 
     var body: some View {
         ZStack {
-            NeonBackgroundView()
+            // ── Pure black game canvas (Prompt 4.1) ──────────────────────
+            Color.black.ignoresSafeArea()
 
+            // ── SpriteKit board ───────────────────────────────────────────
             SpriteView(
                 scene: container.scene,
                 options: [.allowsTransparency, .shouldCullNonVisibleNodes]
             )
             .ignoresSafeArea()
 
+            // ── HUD overlay ───────────────────────────────────────────────
             VStack(spacing: 0) {
-                HStack(spacing: 10) {
-                    BestScorePill(best: container.scoreManager.bestScore)
-
-                    Spacer(minLength: 0)
-
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .symbolRenderingMode(.monochrome)
-                            .foregroundStyle(Theme.Palette.goldDeep)
-                            .frame(width: 20, height: 20)
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
-                            .shadow(color: Theme.Palette.goldDeep.opacity(0.22), radius: 8, x: 0, y: 3)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 18)
-
-                CurrentScoreHeart(score: container.scoreManager.score, combo: container.scoreManager.combo)
-                    .padding(.top, -18)
-
+                gameHUD
                 Spacer()
             }
 
+            // ── Game Over overlay ─────────────────────────────────────────
             if container.scoreManager.isGameOver {
                 GameOverOverlay(
-                    score: container.scoreManager.score,
-                    best: container.scoreManager.bestScore,
+                    score:     container.scoreManager.score,
+                    best:      container.scoreManager.bestScore,
                     playAgain: { container.scene.startNewGame() },
-                    goHome: { dismiss() }
+                    goHome:    { dismiss() }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
         .navigationBarHidden(true)
         .onAppear {
-            container.scene.updateSettings(hapticsEnabled: hapticsEnabled, ghostEnabled: ghostEnabled)
+            container.scene.updateSettings(
+                hapticsEnabled: hapticsEnabled,
+                ghostEnabled:   ghostEnabled
+            )
         }
-        .onChange(of: hapticsEnabled) { _, newValue in
-            container.scene.updateSettings(hapticsEnabled: newValue, ghostEnabled: ghostEnabled)
+        .onChange(of: hapticsEnabled) { _, v in
+            container.scene.updateSettings(hapticsEnabled: v, ghostEnabled: ghostEnabled)
         }
-        .onChange(of: ghostEnabled) { _, newValue in
-            container.scene.updateSettings(hapticsEnabled: hapticsEnabled, ghostEnabled: newValue)
+        .onChange(of: ghostEnabled) { _, v in
+            container.scene.updateSettings(hapticsEnabled: hapticsEnabled, ghostEnabled: v)
+        }
+        .onChange(of: container.scoreManager.score) { _, _ in
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.55)) { scoreScale = 1.12 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+                withAnimation(.spring(response: 0.22, dampingFraction: 0.65)) { scoreScale = 1.0 }
+            }
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(
-                onHome: { dismiss() },
+                onHome:   { dismiss() },
                 onReplay: { container.scene.startNewGame() }
             )
+            .presentationBackground(.clear)
+            .presentationDetents([.large])
         }
         .animation(.easeInOut(duration: 0.18), value: container.scoreManager.isGameOver)
     }
-}
 
-private struct BestScorePill: View {
-    let best: Int
+    // MARK: - HUD
 
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "crown.fill")
-                .resizable()
-                .scaledToFit()
-                .symbolRenderingMode(.monochrome)
-                .foregroundStyle(Theme.Palette.goldDeep)
-                .frame(width: 20, height: 20)
-                .shadow(color: Theme.Palette.goldDeep.opacity(0.20), radius: 10, x: 0, y: 4)
+    /// Top bar: [Crown + Best Score] (Left) | [Gear] (Right)
+    /// Bottom row: [Large Centre Score]
+    private var gameHUD: some View {
+        VStack(spacing: 16) {
+            
+            // ── Top Row: High Score & Settings ───────────────────────────
+            HStack(alignment: .center) {
+                
+                // Left: Crown + High Score
+                HStack(spacing: 8) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 22, weight: .black))
+                        .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.7)) // Dark blue
+                        .background(alignment: .bottom) {
+                            Rectangle()
+                                .fill(Color(red: 1, green: 0.7, blue: 0.1)) // Orange base line
+                                .frame(height: 3)
+                                .offset(y: 4)
+                        }
 
-            Text("\(best)")
-                .font(Theme.Fonts.arcade(22))
-                .foregroundStyle(.white.opacity(0.96))
-                .shadow(color: Color.black.opacity(0.18), radius: 0, x: 0, y: 2)
-        }
-        .frame(height: 44)
-        .padding(.horizontal, 14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
-    }
-}
-
-private struct CurrentScoreHeart: View {
-    let score: Int
-    let combo: Int
-
-    @State private var pulse: Bool = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Theme.Palette.neonRed.opacity(0.16))
-                .frame(width: 98, height: 98)
-                .blur(radius: 18)
-
-            Image(systemName: "heart.fill")
-                .resizable()
-                .scaledToFit()
-                .symbolRenderingMode(.monochrome)
-                .foregroundStyle(Theme.Palette.neonRed)
-                .frame(width: 110, height: 102)
-                .shadow(color: Theme.Palette.neonRed.opacity(0.50), radius: 24, x: 0, y: 10)
-                .symbolEffect(.pulse, value: pulse)
-
-            Text("\(score)")
-                .font(Theme.Fonts.arcade(40))
-                .foregroundStyle(.white.opacity(0.96))
-                .contentTransition(.numericText())
-                .shadow(color: Color.black.opacity(0.20), radius: 0, x: 0, y: 3)
-
-            if combo > 0 {
-                Text("x\(combo)")
-                    .font(Theme.Fonts.arcade(18))
-                    .foregroundStyle(Theme.Palette.neonYellow.opacity(0.95))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(Color.black.opacity(0.18), in: Capsule())
-                    .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                    .offset(y: 48)
-            }
-        }
-        .frame(width: 220, height: 140)
-        .scaleEffect(pulse ? 1.04 : 1.0)
-        .animation(.spring(response: 0.22, dampingFraction: 0.65), value: pulse)
-        .animation(.spring(response: 0.22, dampingFraction: 0.70), value: score)
-        .onChange(of: score) { _, _ in
-            pulse = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
-                pulse = false
-            }
-        }
-    }
-}
-
-
-
-private struct GameOverOverlay: View {
-    let score: Int
-    let best: Int
-    let playAgain: () -> Void
-    let goHome: () -> Void
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.35).ignoresSafeArea()
-
-            VStack(spacing: 12) {
-                Text("Game Over")
-                    .font(Theme.Fonts.arcade(28))
-                    .foregroundStyle(.white.opacity(0.96))
-                    .shadow(color: Theme.Palette.neonCyan.opacity(0.18), radius: 10, x: 0, y: 6)
-
-                VStack(spacing: 10) {
-                    ScoreRow(title: "Best", value: best, icon: "crown.fill", tint: Theme.Palette.goldDeep)
-                    ScoreRow(title: "Score", value: score, icon: "heart.fill", tint: Theme.Palette.neonRed)
+                    Text("\(container.scoreManager.bestScore)")
+                        .font(.system(size: 22, weight: .heavy, design: .rounded))
+                        .foregroundStyle(Color(red: 1.0, green: 0.35, blue: 0.5)) // Pinkish
+                        .contentTransition(.numericText())
                 }
 
+                Spacer()
+
+                // Right: Settings Gear (with NEW badge)
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.3), radius: 2)
+                        .overlay(alignment: .topTrailing) {
+                            Text("NEW")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(Color(red: 1, green: 0.8, blue: 0.2), in: Capsule())
+                                .offset(x: 10, y: -8)
+                        }
+                }
+            }
+            .padding(.horizontal, 24)
+
+            // ── Bottom Row: Large Current Score ───────────────────────────
+            VStack(spacing: 0) {
+                NeonScoreLabel(
+                    score: container.scoreManager.score,
+                    scale: scoreScale
+                )
+
+                // Combo badge (shown only during a streak)
+                if container.scoreManager.combo > 1 {
+                    comboBadge
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.22, dampingFraction: 0.65),
+                       value: container.scoreManager.combo)
+        }
+        .padding(.top, 56)   // below safe area notch
+    }
+
+    // Combo streak badge
+    private var comboBadge: some View {
+        Text("x\(container.scoreManager.combo) COMBO")
+            .font(.system(size: 11, weight: .black, design: .rounded))
+            .foregroundStyle(Color(red: 1, green: 0.95, blue: 0))
+            .tracking(3)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 10)
+            .background(Color.black.opacity(0.55), in: Capsule())
+            .overlay(Capsule().stroke(Color(red: 1, green: 0.95, blue: 0).opacity(0.50), lineWidth: 1))
+            .shadow(color: Color(red: 1, green: 0.95, blue: 0).opacity(0.45), radius: 6)
+            .offset(y: 6)
+    }
+}
+
+// MARK: - NeonScoreLabel
+
+/// Large centred score with multi-layer neon-pink glow — mirrors image_4.png.
+private struct NeonScoreLabel: View {
+    let score: Int
+    let scale: CGFloat
+
+    var body: some View {
+        ZStack {
+            // Outer bloom
+            Text("\(score)")
+                .font(.system(size: 46, weight: .black, design: .rounded))
+                .foregroundStyle(Color(red: 1, green: 0, blue: 1))
+                .blur(radius: 22)
+                .opacity(0.55)
+
+            // Mid glow
+            Text("\(score)")
+                .font(.system(size: 46, weight: .black, design: .rounded))
+                .foregroundStyle(Color(red: 1, green: 0, blue: 1))
+                .blur(radius: 8)
+                .opacity(0.65)
+
+            // Crisp core
+            Text("\(score)")
+                .font(.system(size: 46, weight: .black, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, Color(red: 1, green: 0.55, blue: 1)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .shadow(color: Color(red: 1, green: 0, blue: 1), radius: 8)
+                .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.50), radius: 20)
+                .contentTransition(.numericText())
+        }
+        .scaleEffect(scale)
+    }
+}
+
+// MARK: - GameOverOverlay
+
+private struct GameOverOverlay: View {
+    let score:     Int
+    let best:      Int
+    let playAgain: () -> Void
+    let goHome:    () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.60).ignoresSafeArea()
+
+            VStack(spacing: 14) {
+
+                // Title
+                VStack(spacing: 4) {
+                    Text("GAME OVER")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.96))
+                        .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.55), radius: 12)
+
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 0, green: 1, blue: 1), Color(red: 1, green: 0, blue: 1)],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 2)
+                        .padding(.horizontal, 30)
+                        .opacity(0.55)
+                }
+
+                // Score rows
+                VStack(spacing: 8) {
+                    GameOverScoreRow(
+                        icon:  "crown.fill",
+                        label: "BEST",
+                        value: best,
+                        tint:  Color(red: 0, green: 1, blue: 1)
+                    )
+                    GameOverScoreRow(
+                        icon:  "bolt.fill",
+                        label: "SCORE",
+                        value: score,
+                        tint:  Color(red: 1, green: 0, blue: 1)
+                    )
+                }
+
+                // Buttons
                 VStack(spacing: 10) {
                     Button(action: playAgain) {
-                        Text("Play Again")
-                            .font(Theme.Fonts.arcade(18))
-                            .foregroundStyle(.white.opacity(0.98))
+                        Label("Play Again", systemImage: "arrow.counterclockwise")
+                            .font(.system(size: 17, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 13)
+                            .padding(.vertical, 15)
                             .background(
                                 LinearGradient(
-                                    colors: [Theme.Palette.neonBlue, Theme.Palette.neonCyan],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                                    colors: [Color(red: 0, green: 0.9, blue: 1), Color(red: 0, green: 0.6, blue: 1)],
+                                    startPoint: .leading, endPoint: .trailing
                                 ),
-                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Theme.Palette.neonCyan.opacity(0.95), lineWidth: 2)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.70), lineWidth: 1.5)
                             )
-                            .shadow(color: Theme.Palette.neonCyan.opacity(0.20), radius: 16, x: 0, y: 10)
+                            .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.40), radius: 14, x: 0, y: 6)
                     }
 
                     Button(action: goHome) {
-                        Text("Main Menu")
-                            .font(Theme.Fonts.arcade(16))
-                            .foregroundStyle(.white.opacity(0.95))
+                        Label("Main Menu", systemImage: "house.fill")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.92))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
+                            .padding(.vertical, 13)
                             .background(
-                                LinearGradient(
-                                    colors: [Theme.Palette.neonPurple.opacity(0.85), Theme.Palette.neonPink.opacity(0.75)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                ),
-                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                Color.white.opacity(0.08),
+                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Theme.Palette.neonPink.opacity(0.75), lineWidth: 1.5)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color(red: 1, green: 0, blue: 1).opacity(0.45), lineWidth: 1.5)
                             )
-                            .shadow(color: Theme.Palette.neonPurple.opacity(0.12), radius: 12, x: 0, y: 8)
                     }
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
-            .frame(maxWidth: 308)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Theme.Palette.arcadeBlueTop.opacity(0.96),
-                        Theme.Palette.arcadePanel.opacity(0.98)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Theme.Palette.neonCyan.opacity(0.38), lineWidth: 1.5)
-            )
-            .shadow(color: Color.black.opacity(0.45), radius: 30, x: 0, y: 18)
             .padding(.horizontal, 22)
+            .padding(.vertical, 20)
+            .frame(maxWidth: 320)
+            .background(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(Color(red: 0x10/255, green: 0x10/255, blue: 0x10/255))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0, green: 1, blue: 1).opacity(0.65),
+                                        Color(red: 1, green: 0, blue: 1).opacity(0.55)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+            )
+            .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.20), radius: 30, x: 0, y: 16)
+            .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 24)
         }
     }
 }
 
-private struct ScoreRow: View {
-    let title: String
+// MARK: - GameOverScoreRow
+
+private struct GameOverScoreRow: View {
+    let icon:  String
+    let label: String
     let value: Int
-    let icon: String
-    let tint: Color
+    let tint:  Color
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .resizable()
-                .scaledToFit()
-                .symbolRenderingMode(.monochrome)
+                .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(tint)
-                .frame(width: 30, height: 30)
+                .shadow(color: tint.opacity(0.55), radius: 6)
+                .frame(width: 36, height: 36)
                 .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            Text(title)
-                .font(Theme.Fonts.arcade(14))
-                .foregroundStyle(.white.opacity(0.86))
+            Text(label)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.60))
+                .tracking(3)
 
             Spacer()
 
             Text("\(value)")
-                .font(Theme.Fonts.arcade(18))
+                .font(.system(size: 20, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.96))
+                .contentTransition(.numericText())
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color.black.opacity(0.16), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(tint.opacity(0.18), lineWidth: 1)
         )
     }
 }
+
+// MARK: - Preview
 
 #Preview {
     GameView(mode: .classic)
