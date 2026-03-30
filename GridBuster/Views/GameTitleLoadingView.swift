@@ -105,8 +105,8 @@ struct GameTitleLoadingView: View {
                         .offset(y: bottomWordVisible ? 0 : 30)
                         .animation(.spring(response: 0.75, dampingFraction: 0.72).delay(0.35), value: bottomWordVisible)
 
-                        // "GRID MASTER" subtext
-                        Text("GRID MASTER")
+                        // "MIDNIGHT EDITION" subtext
+                        Text("MIDNIGHT EDITION")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.55))
                             .tracking(9)

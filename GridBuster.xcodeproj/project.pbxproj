@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F0E0EB222F6B45AF00B68079 /* Build configuration list for PBXProject "NeonGridBuster" */;
+			buildConfigurationList = F0E0EB222F6B45AF00B68079 /* Build configuration list for PBXProject "GridBuster" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -256,7 +256,7 @@
 				DEVELOPMENT_TEAM = F984RR57HL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = NeonGridBusterInfo.plist;
+				INFOPLIST_FILE = GridBusterInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Grid Buster";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
@@ -287,7 +287,7 @@
 				DEVELOPMENT_TEAM = F984RR57HL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = NeonGridBusterInfo.plist;
+				INFOPLIST_FILE = GridBusterInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Grid Buster";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
@@ -311,7 +311,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F0E0EB222F6B45AF00B68079 /* Build configuration list for PBXProject "NeonGridBuster" */ = {
+		F0E0EB222F6B45AF00B68079 /* Build configuration list for PBXProject "GridBuster" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F0E0EB302F6B45B100B68079 /* Debug */,

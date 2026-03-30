@@ -55,8 +55,6 @@ struct MainMenuView: View {
 
                         // ── Mode buttons ───────────────────────────────
                         VStack(spacing: 16) {
-                            modeEditionLabel
-
                             // Adventure button → AdventureMapView
                             NavigationLink(destination: AdventureMapView()) {
                                 ModeButton(
@@ -132,8 +130,8 @@ struct MainMenuView: View {
                 fontSize: 54
             )
 
-            // "GRID MASTER" sub-label
-            Text("GRID MASTER")
+            // "MIDNIGHT EDITION" sub-label
+            Text("MIDNIGHT EDITION")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.50))
                 .tracking(9)
@@ -141,15 +139,7 @@ struct MainMenuView: View {
         }
     }
 
-    // MARK: - Edition label
 
-    private var modeEditionLabel: some View {
-        Text("NEON MIDNIGHT EDITION")
-            .font(.system(size: 11, weight: .bold, design: .rounded))
-            .foregroundStyle(.white.opacity(0.38))
-            .tracking(5)
-            .padding(.bottom, 2)
-    }
 }
 
 // MARK: - MenuBackground
