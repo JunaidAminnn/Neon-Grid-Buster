@@ -167,12 +167,6 @@ struct GameView: View {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 22, weight: .black))
                         .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.7)) // Dark blue
-                        .background(alignment: .bottom) {
-                            Rectangle()
-                                .fill(Color(red: 1, green: 0.7, blue: 0.1)) // Orange base line
-                                .frame(height: 3)
-                                .offset(y: 4)
-                        }
 
                     Text("\(container.scoreManager.bestScore)")
                         .font(.system(size: 22, weight: .heavy, design: .rounded))
@@ -182,21 +176,12 @@ struct GameView: View {
 
                 Spacer()
 
-                // Right: Settings Gear (with NEW badge)
+                // Right: Settings Gear
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.3), radius: 2)
-                        .overlay(alignment: .topTrailing) {
-                            Text("NEW")
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 2)
-                                .background(Color(red: 1, green: 0.8, blue: 0.2), in: Capsule())
-                                .offset(x: 10, y: -8)
-                        }
                 }
             }
             .padding(.horizontal, 24)

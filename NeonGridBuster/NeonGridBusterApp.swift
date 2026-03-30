@@ -18,10 +18,12 @@ struct NeonGridBusterApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                Theme.Palette.midnight
+                // Near-black base so no white flash during transitions
+                Color(red: 0x00 / 255.0, green: 0x01 / 255.0, blue: 0x05 / 255.0)
                     .ignoresSafeArea()
 
-                MainMenuView()
+                // Entry point: studio splash → auto-transitions to MainMenuView
+                StudioSplashView()
             }
             .tint(Theme.Palette.neonCyan)
             .preferredColorScheme(.dark)

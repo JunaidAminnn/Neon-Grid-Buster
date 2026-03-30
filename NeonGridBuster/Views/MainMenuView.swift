@@ -2,245 +2,381 @@
 //  MainMenuView.swift
 //  NeonGridBuster
 //
+//  Prompt 2.1 — Main Menu UI.
+//  Deep neon gradient background, cyan/pink title, neon-orange Adventure
+//  and neon-pink Classic mode buttons with NavigationStack routing.
+//
 
 import SwiftUI
 
+// MARK: - MainMenuView
+
 struct MainMenuView: View {
+    var namespace: Namespace.ID? = nil
+
+    // ── State ────────────────────────────────────────────────────────────
+    @State private var showAdventure  = false
+    @State private var showClassic    = false
+
+    // button press feedback
+    @State private var adventurePress = false
+    @State private var classicPress   = false
+
+    // entrance animations
+    @State private var logoVisible    = false
+    @State private var buttonsVisible = false
+    @State private var glowPulse      = false
+
+    // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
-        ZStack {
-            Theme.Palette.midnight
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                // ── Background ─────────────────────────────────────────
+                MenuBackground(pulse: glowPulse)
 
-            NavigationStack {
-                ZStack {
-                    ArcadeBlueBackgroundView()
+                // ── Content ────────────────────────────────────────────
+                GeometryReader { geo in
+                    VStack(spacing: 0) {
 
-                    GeometryReader { geo in
-                        VStack(spacing: 0) {
-                            Spacer(minLength: geo.size.height * 0.09)
+                        Spacer(minLength: geo.size.height * 0.05)
 
-                            NeonLogoView()
-
-                            Spacer(minLength: geo.size.height * 0.16)
-
-                            VStack(spacing: 14) {
-                                Text("NEON MIDNIGHT EDITION")
-                                    .font(Theme.Fonts.arcade(14))
-                                    .foregroundStyle(.white.opacity(0.60))
-                                    .padding(.bottom, 4)
-
-                                NavigationLink {
-                                    GameView(mode: .adventure)
-                                } label: {
-                                    ModeButton(
-                                        title: "Adventure",
-                                        systemIcon: "clock",
-                                        fill: LinearGradient(
-                                            colors: [Color(red: 1.0, green: 0.72, blue: 0.10), Color(red: 1.0, green: 0.56, blue: 0.02)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-                                }
-
-                                NavigationLink {
-                                    GameView(mode: .classic)
-                                } label: {
-                                    ModeButton(
-                                        title: "Classic",
-                                        systemIcon: "infinity",
-                                        fill: LinearGradient(
-                                            colors: [Color(red: 0.15, green: 0.88, blue: 0.72), Color(red: 0.06, green: 0.72, blue: 0.60)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-                                }
-                            }
-                            .padding(.horizontal, 22)
-                            .padding(.bottom, geo.size.height * 0.14)
-
-                            Spacer(minLength: 0)
+                        // ── Logo block (Prompt 1.2 title style) ────────
+                        if let ns = namespace {
+                            menuLogo
+                                .matchedGeometryEffect(id: "mainLogo", in: ns)
+                        } else {
+                            menuLogo
+                                .opacity(logoVisible ? 1 : 0)
+                                .offset(y: logoVisible ? 0 : -28)
+                                .animation(.spring(response: 0.75, dampingFraction: 0.72), value: logoVisible)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                        Spacer(minLength: geo.size.height * 0.06)
+
+                        // ── Mode buttons ───────────────────────────────
+                        VStack(spacing: 16) {
+                            modeEditionLabel
+
+                            // Adventure button → AdventureMapView
+                            NavigationLink(destination: AdventureMapView()) {
+                                ModeButton(
+                                    title:      "Adventure",
+                                    systemIcon: "clock.fill",
+                                    accentColor: Color(red: 1.00, green: 0.60, blue: 0.00),   // #FF9900
+                                    glowColor:   Color(red: 1.00, green: 0.60, blue: 0.00),
+                                    isPressed:   adventurePress
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle(isPressed: $adventurePress))
+
+                            // Classic button → GameView(mode: .classic)
+                            NavigationLink(destination: GameView(mode: .classic)) {
+                                ModeButton(
+                                    title:      "Classic",
+                                    systemIcon: "infinity",
+                                    accentColor: Color(red: 1.00, green: 0.00, blue: 1.00),   // #FF00FF
+                                    glowColor:   Color(red: 1.00, green: 0.00, blue: 1.00),
+                                    isPressed:   classicPress
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle(isPressed: $classicPress))
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, geo.size.height * 0.22)
+                        .opacity(buttonsVisible ? 1 : 0)
+                        .offset(y: buttonsVisible ? 0 : 32)
+                        .animation(.spring(response: 0.75, dampingFraction: 0.72).delay(0.2), value: buttonsVisible)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .navigationBarHidden(true)
-                .toolbarBackground(.hidden, for: .navigationBar)
+            }
+            .navigationBarHidden(true)
+            .onAppear {
+                logoVisible    = true
+                buttonsVisible = true
+                glowPulse      = true
             }
         }
     }
-}
 
-private struct NeonLogoView: View {
-    @State private var revealWords = false
+    // MARK: - Logo
 
-    var body: some View {
-        VStack(spacing: 12) {
-            ZStack(alignment: .top) {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundStyle(Theme.Palette.neonYellow)
-                    .shadow(color: Color.black.opacity(0.25), radius: 6, x: 0, y: 4)
-                    .offset(y: -18)
+    private var menuLogo: some View {
+        VStack(spacing: 6) {
+            // Arcade-button crown icon (same as GameTitleLoadingView)
+            MenuArcadeIcon()
+                .padding(.bottom, 10)
 
-                ZStack {
-                    ExtrudedWord(
-                        "NEON",
-                        fill: LinearGradient(
-                            colors: [Theme.Palette.neonCyan, Theme.Palette.neonYellow],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .offset(y: revealWords ? -54 : 0)
-                    .zIndex(1)
+            // "NEON GRID" — cyan #00FFFF
+            MenuNeonWord(
+                text:     "NEON GRID",
+                color:    Color(red: 0, green: 1, blue: 1),
+                fontSize: 42
+            )
 
-                    ExtrudedWord(
-                        "BUSTER",
-                        fill: LinearGradient(
-                            colors: [Theme.Palette.neonPink, Theme.Palette.neonPurple],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .offset(y: revealWords ? 54 : 0)
-                    .zIndex(1)
+            // "BUSTER" — hot pink #FF00FF
+            MenuNeonWord(
+                text:     "BUSTER",
+                color:    Color(red: 1, green: 0, blue: 1),
+                fontSize: 54
+            )
 
-                    ExtrudedWord(
-                        "GRID",
-                        fill: LinearGradient(
-                            colors: [Theme.Palette.neonLime, Theme.Palette.neonCyan],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .zIndex(2)
-                }
-                .frame(height: 180)
-                .clipped()
-                .animation(.spring(response: 0.9, dampingFraction: 0.82), value: revealWords)
-                .onAppear {
-                    guard revealWords == false else { return }
-                    revealWords = true
-                }
-            }
-
-            MiniBlockMark()
-                .padding(.top, 2)
+            // "GRID MASTER" sub-label
+            Text("GRID MASTER")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.50))
+                .tracking(9)
+                .padding(.top, 6)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Neon Grid Buster")
+    }
+
+    // MARK: - Edition label
+
+    private var modeEditionLabel: some View {
+        Text("NEON MIDNIGHT EDITION")
+            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .foregroundStyle(.white.opacity(0.38))
+            .tracking(5)
+            .padding(.bottom, 2)
     }
 }
 
-private struct MiniBlockMark: View {
-    var body: some View {
-        HStack(spacing: 6) {
-            BlockDot(color: Theme.Palette.neonYellow)
-            BlockDot(color: Theme.Palette.neonYellow)
-            BlockDot(color: Theme.Palette.neonYellow)
-            BlockDot(color: Theme.Palette.neonYellow)
-        }
-        .rotationEffect(.degrees(-18))
-        .opacity(0.85)
-    }
-}
+// MARK: - MenuBackground
 
-private struct BlockDot: View {
-    let color: Color
-    var body: some View {
-        RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(color.opacity(0.85))
-            .frame(width: 14, height: 14)
-            .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Color.black.opacity(0.22), lineWidth: 1))
-            .shadow(color: color.opacity(0.18), radius: 10, x: 0, y: 6)
-    }
-}
-
-private struct ExtrudedWord: View {
-    let text: String
-    let fill: LinearGradient
-
-    init(_ text: String, fill: LinearGradient) {
-        self.text = text
-        self.fill = fill
-    }
+private struct MenuBackground: View {
+    let pulse: Bool
 
     var body: some View {
         ZStack {
-            Text(text)
-                .font(Theme.Fonts.arcade(46))
-                .foregroundStyle(Color.black.opacity(0.25))
-                .offset(x: 0, y: 10)
+            // Base gradient — identical to splash / loading screens
+            LinearGradient(
+                colors: [
+                    Color(red: 0x0D, green: 0x01, blue: 0x2B),
+                    Color(red: 0x06, green: 0x00, blue: 0x12),
+                    Color(red: 0x00, green: 0x01, blue: 0x05)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            Text(text)
-                .font(Theme.Fonts.arcade(46))
-                .foregroundStyle(Color.black.opacity(0.12))
-                .offset(x: 0, y: 7)
+            // Cyan top-left ambient
+            RadialGradient(
+                colors: [Color(red: 0, green: 1, blue: 1).opacity(pulse ? 0.16 : 0.07), .clear],
+                center: .topLeading, startRadius: 0, endRadius: 420
+            )
+            .blendMode(.plusLighter)
+            .ignoresSafeArea()
 
+            // Pink top-right ambient
+            RadialGradient(
+                colors: [Color(red: 1, green: 0, blue: 1).opacity(pulse ? 0.14 : 0.06), .clear],
+                center: .topTrailing, startRadius: 0, endRadius: 380
+            )
+            .blendMode(.plusLighter)
+            .ignoresSafeArea()
+
+            // Orange bottom-center (button color echo)
+            RadialGradient(
+                colors: [Color(red: 1, green: 0.6, blue: 0).opacity(pulse ? 0.09 : 0.03), .clear],
+                center: .bottom, startRadius: 0, endRadius: 360
+            )
+            .blendMode(.plusLighter)
+            .ignoresSafeArea()
+        }
+        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulse)
+    }
+}
+
+// MARK: - MenuNeonWord
+
+/// Neon glowing word for the menu title (mirrors GameTitleLoadingView style).
+private struct MenuNeonWord: View {
+    let text: String
+    let color: Color
+    let fontSize: CGFloat
+
+    @State private var pulse = false
+
+    var body: some View {
+        ZStack {
+            // Outer bloom
             Text(text)
-                .font(Theme.Fonts.arcade(46))
-                .foregroundStyle(fill)
-                .overlay(
-                    Text(text)
-                        .font(Theme.Fonts.arcade(46))
-                        .foregroundStyle(.white.opacity(0.22))
-                        .mask(
-                            LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .bottom)
-                        )
-                )
-                .shadow(color: Color.black.opacity(0.24), radius: 14, x: 0, y: 12)
+                .font(.system(size: fontSize, weight: .black, design: .rounded))
+                .foregroundStyle(color)
+                .blur(radius: 30)
+                .opacity(pulse ? 0.80 : 0.42)
+
+            // Mid glow
+            Text(text)
+                .font(.system(size: fontSize, weight: .black, design: .rounded))
+                .foregroundStyle(color)
+                .blur(radius: 12)
+                .opacity(0.65)
+
+            // Tight inner glow
+            Text(text)
+                .font(.system(size: fontSize, weight: .black, design: .rounded))
+                .foregroundStyle(color.opacity(0.55))
+                .blur(radius: 4)
+
+            // Crisp core
+            Text(text)
+                .font(.system(size: fontSize, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(color: color,               radius: 10, x: 0, y: 0)
+                .shadow(color: color.opacity(0.55), radius: 24, x: 0, y: 0)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
         }
     }
 }
 
-private struct ModeButton: View {
-    let title: String
-    let systemIcon: String
-    let fill: LinearGradient
+// MARK: - MenuArcadeIcon
+
+/// Crown-position glowing golden arcade button icon.
+private struct MenuArcadeIcon: View {
+    @State private var halo = false
 
     var body: some View {
-        HStack {
-            HStack(spacing: 12) {
-                Image(systemName: systemIcon)
-                    .font(.system(size: 22, weight: .black))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .frame(width: 44, height: 44)
-                    .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
+        ZStack {
+            Circle()
+                .fill(Color(red: 1, green: 0.75, blue: 0).opacity(halo ? 0.28 : 0.10))
+                .frame(width: 90, height: 90)
+                .blur(radius: 20)
 
-                Text(title)
-                    .font(Theme.Fonts.arcade(24))
-                    .foregroundStyle(.white.opacity(0.95))
-                    .shadow(color: Color.black.opacity(0.18), radius: 0, x: 0, y: 2)
-            }
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [Color(red: 1, green: 0.88, blue: 0), Color(red: 1, green: 0.55, blue: 0)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 3
+                )
+                .frame(width: 64, height: 64)
+                .shadow(color: Color(red: 1, green: 0.75, blue: 0).opacity(0.85), radius: 8)
 
-            Spacer(minLength: 0)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(red: 1, green: 0.95, blue: 0.3), Color(red: 1, green: 0.65, blue: 0)],
+                        center: .topLeading, startRadius: 2, endRadius: 24
+                    )
+                )
+                .frame(width: 46, height: 46)
+                .shadow(color: Color(red: 1, green: 0.75, blue: 0), radius: 14)
+
+            Image(systemName: "arrowtriangle.up.fill")
+                .font(.system(size: 14, weight: .black))
+                .foregroundStyle(.white.opacity(0.80))
+                .offset(y: -1)
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 16)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                halo = true
+            }
+        }
+    }
+}
+
+// MARK: - ModeButton
+
+/// Large rounded-rectangle mode button with a left-side icon container
+/// and neon glow matching the button's accent color — mirrors image_2.png layout.
+private struct ModeButton: View {
+    let title:       String
+    let systemIcon:  String
+    let accentColor: Color
+    let glowColor:   Color
+    let isPressed:   Bool
+
+    var body: some View {
+        HStack(spacing: 0) {
+
+            // ── Left icon container ─────────────────────────────
+            ZStack {
+                // Frosted-dark inset
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.black.opacity(0.28))
+                    .frame(width: 58, height: 58)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+
+                Image(systemName: systemIcon)
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundStyle(.white.opacity(0.94))
+                    .shadow(color: glowColor.opacity(0.55), radius: 8)
+            }
+            .padding(.leading, 14)
+
+            // ── Button label ────────────────────────────────────
+            Text(title)
+                .font(.system(size: 26, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.97))
+                .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 2)
+                .frame(maxWidth: .infinity)
+                .padding(.trailing, 14)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 76)
         .background(
             ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(fill)
+                // Solid accent fill
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(accentColor)
 
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                // Highlight shimmer on top half
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [Color.white.opacity(0.28), .clear],
-                            startPoint: .top,
-                            endPoint: .bottom
+                            colors: [Color.white.opacity(0.30), .clear],
+                            startPoint: .top, endPoint: .center
                         )
                     )
                     .blendMode(.softLight)
-                    .opacity(0.85)
+
+                // Bottom shadow stripe
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [.clear, Color.black.opacity(0.22)],
+                            startPoint: .center, endPoint: .bottom
+                        )
+                    )
             }
         )
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.25), radius: 20, x: 0, y: 16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1.5)
+        )
+        // Neon tube glow under the button
+        .shadow(color: glowColor.opacity(0.55), radius: 18, x: 0, y: 8)
+        .shadow(color: glowColor.opacity(0.28), radius: 36, x: 0, y: 16)
+        .scaleEffect(isPressed ? 0.96 : 1.0)
+        .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isPressed)
     }
 }
+
+// MARK: - ScaleButtonStyle
+
+/// Tracks press state for haptic-style scale feedback.
+private struct ScaleButtonStyle: ButtonStyle {
+    @Binding var isPressed: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, pressed in
+                isPressed = pressed
+            }
+    }
+}
+
+// MARK: - Preview
 
 #Preview {
     MainMenuView()

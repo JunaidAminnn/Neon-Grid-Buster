@@ -45,6 +45,17 @@ final class GridManager {
         }
     }
 
+    /// Pre-fills the grid from a 2D optional colour array (adventure puzzle presets).
+    func loadPreset(_ preset: [[NeonColor?]]) {
+        for row in 0..<Self.gridSize {
+            guard row < preset.count else { break }
+            for col in 0..<Self.gridSize {
+                guard col < preset[row].count else { break }
+                cells[row][col] = preset[row][col]
+            }
+        }
+    }
+
     func isOccupied(row: Int, col: Int) -> Bool {
         cells[row][col] != nil
     }
@@ -98,16 +109,18 @@ final class GridManager {
     }
 
     struct ClearResult: Hashable {
-        var clearedRows: [Int]
-        var clearedCols: [Int]
+        var clearedRows:  [Int]
+        var clearedCols:  [Int]
         var clearedPoints: [GridPoint]
+        /// True when every cell on the 8×8 grid is empty after this clear.
+        var isBoardClear: Bool
     }
 
     func clearFilledLines() -> ClearResult {
         let rows = filledRows()
         let cols = filledCols()
         guard !rows.isEmpty || !cols.isEmpty else {
-            return ClearResult(clearedRows: [], clearedCols: [], clearedPoints: [])
+            return ClearResult(clearedRows: [], clearedCols: [], clearedPoints: [], isBoardClear: false)
         }
 
         var cleared: Set<GridPoint> = []
@@ -126,7 +139,15 @@ final class GridManager {
             cells[point.row][point.col] = nil
         }
 
-        return ClearResult(clearedRows: rows, clearedCols: cols, clearedPoints: Array(cleared))
+        // Board-clear check: all cells nil after this clear?
+        let isBoardClear = cells.allSatisfy { row in row.allSatisfy { $0 == nil } }
+
+        return ClearResult(
+            clearedRows:   rows,
+            clearedCols:   cols,
+            clearedPoints: Array(cleared),
+            isBoardClear:  isBoardClear
+        )
     }
 
     func canPlaceAnywhere(shape: BlockShape) -> Bool {
