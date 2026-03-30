@@ -150,42 +150,39 @@ struct SettingsView: View {
 
                     .padding(.horizontal, 14)
                     .padding(.top, 12)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 24)
                 }
             }
-            .frame(maxWidth: 380)
+            .frame(maxWidth: 360)
             .background(
-                ZStack {
-                    // Very dark purple background (#240021)
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255))
-
-                    // Subtle inner highlight
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.06), .clear],
-                                startPoint: .top, endPoint: .center
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.04), .clear],
+                                    startPoint: .top, endPoint: .center
+                                )
                             )
-                        )
-                }
+                    )
             )
             // Cyan neon border (the key brand element)
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.90 : 0.55),
-                                Color(red: 0, green: 0.7, blue: 1).opacity(borderPulse ? 0.70 : 0.35),
-                                Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.90 : 0.55)
+                                Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.90 : 0.60),
+                                Color(red: 1, green: 0, blue: 1).opacity(borderPulse ? 0.70 : 0.40)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.8
+                        lineWidth: 2.5
                     )
             )
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             // Neon outer glow on the container
             .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.30 : 0.14), radius: 24, x: 0, y: 0)
             .shadow(color: Color.black.opacity(0.55), radius: 40, x: 0, y: 22)
