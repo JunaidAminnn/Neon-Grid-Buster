@@ -268,58 +268,52 @@ private struct NeonTitleWord: View {
 
 // MARK: - ArcadeButtonIcon
 
-/// Crown-position icon: a glowing neon arcade button (concentric circles).
+/// Crown-position app icon (reads from bundle or assets).
 private struct ArcadeButtonIcon: View {
     @State private var halo = false
 
     var body: some View {
         ZStack {
-            // Outer halo glow
-            Circle()
-                .fill(Color(red: 1, green: 0.75, blue: 0).opacity(halo ? 0.25 : 0.10))
-                .frame(width: 88, height: 88)
-                .blur(radius: 18)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(red: 0, green: 1, blue: 1).opacity(halo ? 0.28 : 0.10))
+                .frame(width: 80, height: 80)
+                .blur(radius: 20)
 
-            // Outer ring
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color(red: 1, green: 0.88, blue: 0), Color(red: 1, green: 0.55, blue: 0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 3
-                )
-                .frame(width: 62, height: 62)
-                .shadow(color: Color(red: 1, green: 0.75, blue: 0).opacity(0.85), radius: 8, x: 0, y: 0)
-
-            // Inner filled cap
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color(red: 1, green: 0.95, blue: 0.3),
-                            Color(red: 1, green: 0.65, blue: 0.0)
-                        ],
-                        center: .topLeading,
-                        startRadius: 2,
-                        endRadius: 24
+            if let appIcon = fetchAppIcon() {
+                Image(uiImage: appIcon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.85), radius: 8)
+            } else {
+                // Fallback geometry if asset is totally missing
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.cyan, lineWidth: 2)
+                    .frame(width: 64, height: 64)
+                    .overlay(
+                        Image(systemName: "app.dashed")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.cyan)
                     )
-                )
-                .frame(width: 44, height: 44)
-                .shadow(color: Color(red: 1, green: 0.75, blue: 0), radius: 12, x: 0, y: 0)
-
-            // Arcade cross / highlight
-            Image(systemName: "arrowtriangle.up.fill")
-                .font(.system(size: 14, weight: .black))
-                .foregroundStyle(.white.opacity(0.80))
-                .offset(y: -1)
+            }
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 halo = true
             }
         }
+    }
+
+    private func fetchAppIcon() -> UIImage? {
+        if let icon = UIImage(named: "AppIcon") { return icon }
+        if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
+           let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+           let files = primary["CFBundleIconFiles"] as? [String],
+           let name = files.last {
+            return UIImage(named: name)
+        }
+        return nil
     }
 }
 
@@ -353,9 +347,6 @@ private struct AnimatedBlockCluster: View {
     @State private var shapeIndex = 0
     @State private var rotation: Double = 0
 
-    // Timer to cycle shapes and rotation
-    let timer = Timer.publish(every: 0.45, on: .main, in: .common).autoconnect()
-
     var body: some View {
         let currentShape = shapes[shapeIndex % shapes.count]
         let currentColor = colors[shapeIndex % colors.count]
@@ -384,12 +375,16 @@ private struct AnimatedBlockCluster: View {
         }
         .rotationEffect(.degrees(rotation))
         .scaleEffect(bounce ? 1.0 : 0.88)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: shapeIndex)
         .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: bounce)
-        .onReceive(timer) { _ in
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                shapeIndex += 1
-                rotation += 90
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 220_000_000) // 0.22 seconds
+                await MainActor.run {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
+                        shapeIndex += 1
+                        rotation += 90
+                    }
+                }
             }
         }
     }

@@ -39,7 +39,7 @@ struct MainMenuView: View {
                 GeometryReader { geo in
                     VStack(spacing: 0) {
 
-                        Spacer(minLength: geo.size.height * 0.05)
+                        Spacer(minLength: geo.size.height * 0.05 + 5)
 
                         // ── Logo block (Prompt 1.2 title style) ────────
                         if let ns = namespace {
@@ -52,7 +52,7 @@ struct MainMenuView: View {
                                 .animation(.spring(response: 0.75, dampingFraction: 0.72), value: logoVisible)
                         }
 
-                        Spacer(minLength: geo.size.height * 0.06)
+                        Spacer(minLength: geo.size.height * 0.06 + 18)
 
                         // ── Mode buttons ───────────────────────────────
                         VStack(spacing: 16) {
@@ -95,7 +95,7 @@ struct MainMenuView: View {
                             .buttonStyle(ScaleButtonStyle(isPressed: $moreGamesPress))
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, geo.size.height * 0.22)
+                        .padding(.bottom, geo.size.height * 0.22 - 20)
                         .opacity(buttonsVisible ? 1 : 0)
                         .offset(y: buttonsVisible ? 0 : 32)
                         .animation(.spring(response: 0.75, dampingFraction: 0.72).delay(0.2), value: buttonsVisible)
@@ -250,48 +250,52 @@ private struct MenuNeonWord: View {
 
 // MARK: - MenuArcadeIcon
 
-/// Crown-position glowing golden arcade button icon.
+/// Crown-position app icon (reads from bundle or assets).
 private struct MenuArcadeIcon: View {
     @State private var halo = false
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(Color(red: 1, green: 0.75, blue: 0).opacity(halo ? 0.28 : 0.10))
-                .frame(width: 90, height: 90)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(red: 0, green: 1, blue: 1).opacity(halo ? 0.28 : 0.10))
+                .frame(width: 80, height: 80)
                 .blur(radius: 20)
 
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [Color(red: 1, green: 0.88, blue: 0), Color(red: 1, green: 0.55, blue: 0)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 3
-                )
-                .frame(width: 64, height: 64)
-                .shadow(color: Color(red: 1, green: 0.75, blue: 0).opacity(0.85), radius: 8)
-
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color(red: 1, green: 0.95, blue: 0.3), Color(red: 1, green: 0.65, blue: 0)],
-                        center: .topLeading, startRadius: 2, endRadius: 24
+            if let appIcon = fetchAppIcon() {
+                Image(uiImage: appIcon)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.85), radius: 8)
+            } else {
+                // Fallback geometry if asset is totally missing
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.cyan, lineWidth: 2)
+                    .frame(width: 64, height: 64)
+                    .overlay(
+                        Image(systemName: "app.dashed")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.cyan)
                     )
-                )
-                .frame(width: 46, height: 46)
-                .shadow(color: Color(red: 1, green: 0.75, blue: 0), radius: 14)
-
-            Image(systemName: "arrowtriangle.up.fill")
-                .font(.system(size: 14, weight: .black))
-                .foregroundStyle(.white.opacity(0.80))
-                .offset(y: -1)
+            }
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 halo = true
             }
         }
+    }
+
+    private func fetchAppIcon() -> UIImage? {
+        if let icon = UIImage(named: "AppIcon") { return icon }
+        if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
+           let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+           let files = primary["CFBundleIconFiles"] as? [String],
+           let name = files.last {
+            return UIImage(named: name)
+        }
+        return nil
     }
 }
 
@@ -312,37 +316,37 @@ private struct ModeButton: View {
             // ── Left icon container ─────────────────────────────
             ZStack {
                 // Frosted-dark inset
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.black.opacity(0.28))
-                    .frame(width: 48, height: 48)
+                    .frame(width: 40, height: 40)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
 
                 Image(systemName: systemIcon)
-                    .font(.system(size: 22, weight: .black))
+                    .font(.system(size: 18, weight: .black))
                     .foregroundStyle(.white.opacity(0.94))
                     .shadow(color: glowColor.opacity(0.55), radius: 6)
             }
-            .padding(.leading, 12)
+            .padding(.leading, 10)
 
             // ── Button label ────────────────────────────────────
             Text(title)
-                .font(.system(size: 24, weight: .black, design: .rounded))
+                .font(.system(size: 20, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.97))
                 .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 2)
                 .frame(maxWidth: .infinity)
-                .padding(.trailing, 12)
+                .padding(.trailing, 10)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 66)
+        .frame(height: 54)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(accentColor)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(accentColor.opacity(0.18))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(glowColor, lineWidth: 3)
         )
         // Flat intense neon glow, replacing previous heavy drop shadows
