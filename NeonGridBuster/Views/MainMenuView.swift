@@ -21,6 +21,7 @@ struct MainMenuView: View {
     // button press feedback
     @State private var adventurePress = false
     @State private var classicPress   = false
+    @State private var moreGamesPress = false
 
     // entrance animations
     @State private var logoVisible    = false
@@ -62,8 +63,8 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "Adventure",
                                     systemIcon: "clock.fill",
-                                    accentColor: Color(red: 1.00, green: 0.60, blue: 0.00),   // #FF9900
-                                    glowColor:   Color(red: 1.00, green: 0.60, blue: 0.00),
+                                    accentColor: Color(red: 0.3, green: 0.85, blue: 0.3),   // Light green
+                                    glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0),    // Bright green
                                     isPressed:   adventurePress
                                 )
                             }
@@ -74,12 +75,24 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "Classic",
                                     systemIcon: "infinity",
-                                    accentColor: Color(red: 1.00, green: 0.00, blue: 1.00),   // #FF00FF
-                                    glowColor:   Color(red: 1.00, green: 0.00, blue: 1.00),
+                                    accentColor: Color(red: 0.85, green: 0.85, blue: 0.3),  // Light yellow
+                                    glowColor:   Color(red: 1.0, green: 1.0, blue: 0.0),    // Bright yellow
                                     isPressed:   classicPress
                                 )
                             }
                             .buttonStyle(ScaleButtonStyle(isPressed: $classicPress))
+                            
+                            // More Games button → Currently Non-functional
+                            Button(action: {}) {
+                                ModeButton(
+                                    title:      "More Games",
+                                    systemIcon: "gamecontroller.fill",
+                                    accentColor: Color(red: 0.3, green: 0.7, blue: 1.0),    // Light blue
+                                    glowColor:   Color(red: 0.0, green: 0.8, blue: 1.0),    // Bright cyan
+                                    isPressed:   moreGamesPress
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle(isPressed: $moreGamesPress))
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, geo.size.height * 0.22)
@@ -299,64 +312,41 @@ private struct ModeButton: View {
             // ── Left icon container ─────────────────────────────
             ZStack {
                 // Frosted-dark inset
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.black.opacity(0.28))
-                    .frame(width: 58, height: 58)
+                    .frame(width: 48, height: 48)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
 
                 Image(systemName: systemIcon)
-                    .font(.system(size: 24, weight: .black))
+                    .font(.system(size: 22, weight: .black))
                     .foregroundStyle(.white.opacity(0.94))
-                    .shadow(color: glowColor.opacity(0.55), radius: 8)
+                    .shadow(color: glowColor.opacity(0.55), radius: 6)
             }
-            .padding(.leading, 14)
+            .padding(.leading, 12)
 
             // ── Button label ────────────────────────────────────
             Text(title)
-                .font(.system(size: 26, weight: .black, design: .rounded))
+                .font(.system(size: 24, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.97))
                 .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 2)
                 .frame(maxWidth: .infinity)
-                .padding(.trailing, 14)
+                .padding(.trailing, 12)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 76)
+        .frame(height: 66)
         .background(
-            ZStack {
-                // Solid accent fill
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(accentColor)
-
-                // Highlight shimmer on top half
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.30), .clear],
-                            startPoint: .top, endPoint: .center
-                        )
-                    )
-                    .blendMode(.softLight)
-
-                // Bottom shadow stripe
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [.clear, Color.black.opacity(0.22)],
-                            startPoint: .center, endPoint: .bottom
-                        )
-                    )
-            }
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(accentColor)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(glowColor, lineWidth: 3)
         )
-        // Neon tube glow under the button
-        .shadow(color: glowColor.opacity(0.55), radius: 18, x: 0, y: 8)
-        .shadow(color: glowColor.opacity(0.28), radius: 36, x: 0, y: 16)
+        // Flat intense neon glow, replacing previous heavy drop shadows
+        .shadow(color: glowColor.opacity(0.60), radius: 14, x: 0, y: 0)
         .scaleEffect(isPressed ? 0.96 : 1.0)
         .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isPressed)
     }

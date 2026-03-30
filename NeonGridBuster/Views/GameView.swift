@@ -202,7 +202,7 @@ struct GameView: View {
             .animation(.spring(response: 0.22, dampingFraction: 0.65),
                        value: container.scoreManager.combo)
         }
-        .padding(.top, 56)   // below safe area notch
+        .padding(.top, 16)   // reduced from 56 to prevent grid overlap
     }
 
     // Combo streak badge

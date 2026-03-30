@@ -105,7 +105,7 @@ struct StudioSplashView: View {
         ZStack {
             // Outer soft glow layers (bloom)
             Text(text)
-                .font(.system(size: 90, weight: .black, design: .rounded))
+                .font(.system(size: 82, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.1)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1))
@@ -113,7 +113,7 @@ struct StudioSplashView: View {
                 .opacity(glowPulse ? 0.85 : 0.55)
 
             Text(text)
-                .font(.system(size: 90, weight: .black, design: .rounded))
+                .font(.system(size: 82, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.1)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1))
@@ -122,7 +122,7 @@ struct StudioSplashView: View {
 
             // Tight inner glow
             Text(text)
-                .font(.system(size: 90, weight: .black, design: .rounded))
+                .font(.system(size: 82, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.1)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1).opacity(0.60))
@@ -130,7 +130,7 @@ struct StudioSplashView: View {
 
             // Crisp white core text
             Text(text)
-                .font(.system(size: 90, weight: .black, design: .rounded))
+                .font(.system(size: 82, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.1)
                 .foregroundStyle(
