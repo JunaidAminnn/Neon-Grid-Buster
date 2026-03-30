@@ -260,6 +260,7 @@ private struct NeonTitleWord: View {
                 .shadow(color: color, radius: 10, x: 0, y: 0)
                 .shadow(color: color.opacity(0.6), radius: 24, x: 0, y: 0)
         }
+        .fixedSize(horizontal: true, vertical: false)
         .onAppear {
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
                 pulse = true
@@ -380,9 +381,9 @@ private struct AnimatedBlockCluster: View {
         .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: bounce)
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 220_000_000) // 0.22 seconds
+                try? await Task.sleep(nanoseconds: 800_000_000) // 0.80 seconds
                 await MainActor.run {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                         shapeIndex += 1
                         rotation += 90
                     }

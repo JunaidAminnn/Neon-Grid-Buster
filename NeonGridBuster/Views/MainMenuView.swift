@@ -51,7 +51,7 @@ struct MainMenuView: View {
                                 .animation(.spring(response: 0.75, dampingFraction: 0.72), value: logoVisible)
                         }
 
-                        Spacer(minLength: geo.size.height * 0.06 + 18)
+                        Spacer(minLength: geo.size.height * 0.06 + 32)
 
                         // ── Mode buttons ───────────────────────────────
                         VStack(spacing: 16) {
@@ -94,7 +94,7 @@ struct MainMenuView: View {
                             .buttonStyle(ScaleButtonStyle(isPressed: $moreGamesPress))
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, geo.size.height * 0.22 - 20)
+                        .padding(.bottom, geo.size.height * 0.15)
                         .opacity(buttonsVisible ? 1 : 0)
                         .offset(y: buttonsVisible ? 0 : 32)
                         .animation(.spring(response: 0.75, dampingFraction: 0.72).delay(0.2), value: buttonsVisible)
@@ -238,6 +238,7 @@ private struct MenuNeonWord: View {
                 .shadow(color: color,               radius: 10, x: 0, y: 0)
                 .shadow(color: color.opacity(0.55), radius: 24, x: 0, y: 0)
         }
+        .fixedSize(horizontal: true, vertical: false)
         .onAppear {
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
                 pulse = true
@@ -331,14 +332,14 @@ private struct ModeButton: View {
 
             // ── Button label ────────────────────────────────────
             Text(title)
-                .font(.system(size: 20, weight: .black, design: .rounded))
+                .font(.system(size: 24, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.97))
                 .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 2)
                 .frame(maxWidth: .infinity)
                 .padding(.trailing, 10)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 54)
+        .frame(height: 70)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(accentColor.opacity(0.18))
