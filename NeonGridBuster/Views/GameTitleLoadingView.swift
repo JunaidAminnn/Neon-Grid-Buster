@@ -362,13 +362,25 @@ private struct AnimatedBlockCluster: View {
                 .blur(radius: 18)
 
             // Block grid canvas
-            Canvas { ctx, _ in
+            Canvas { ctx, size in
                 let s: CGFloat = 16   // cell size
                 let gap: CGFloat = 2  // gap between cells
 
+                let minCol = CGFloat(currentShape.map { $0.col }.min() ?? 0)
+                let maxCol = CGFloat(currentShape.map { $0.col }.max() ?? 0)
+                let minRow = CGFloat(currentShape.map { $0.row }.min() ?? 0)
+                let maxRow = CGFloat(currentShape.map { $0.row }.max() ?? 0)
+
+                let shapeWidth = (maxCol - minCol + 1) * s + (maxCol - minCol) * gap
+                let shapeHeight = (maxRow - minRow + 1) * s + (maxRow - minRow) * gap
+
+                // Perfect geometric centering offset!
+                let offsetX = (size.width - shapeWidth) / 2 - minCol * (s + gap)
+                let offsetY = (size.height - shapeHeight) / 2 - minRow * (s + gap)
+
                 for cell in currentShape {
-                    let x = CGFloat(cell.col) * (s + gap)
-                    let y = CGFloat(cell.row) * (s + gap)
+                    let x = offsetX + CGFloat(cell.col) * (s + gap)
+                    let y = offsetY + CGFloat(cell.row) * (s + gap)
                     let rect = CGRect(x: x, y: y, width: s, height: s)
                     let path = Path(roundedRect: rect, cornerRadius: 3)
                     ctx.fill(path, with: .color(currentColor))
