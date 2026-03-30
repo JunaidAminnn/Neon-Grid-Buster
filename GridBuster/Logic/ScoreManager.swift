@@ -21,6 +21,7 @@ final class ScoreManager: ObservableObject {
 
     // ── Private ──────────────────────────────────────────────────────────
     private var lastMoveCleared: Bool = false
+    private var comboGraceMoves: Int  = 0
     private let bestKey = "NeonGridBuster.bestScore"
 
     // MARK: - Init
@@ -35,6 +36,7 @@ final class ScoreManager: ObservableObject {
         score           = 0
         combo           = 0
         lastMoveCleared = false
+        comboGraceMoves = 0
         isGameOver      = false
     }
 
@@ -79,11 +81,18 @@ final class ScoreManager: ObservableObject {
 
         // ── 1. Update combo FIRST so the multiplier is correct this turn ─
         if totalLinesCleared > 0 {
-            combo           = lastMoveCleared ? combo + 1 : 1
+            combo           = (lastMoveCleared || comboGraceMoves > 0) ? combo + 1 : 1
             lastMoveCleared = true
+            comboGraceMoves = 2   // Reset grace period on any clear
         } else {
-            combo           = 0
-            lastMoveCleared = false
+            if comboGraceMoves > 0 {
+                comboGraceMoves -= 1
+                // We DON'T reset combo here, lastMoveCleared stays false
+                lastMoveCleared = false
+            } else {
+                combo           = 0
+                lastMoveCleared = false
+            }
         }
 
         // ── 2. Cell-fill points ─────────────────────────────────────────

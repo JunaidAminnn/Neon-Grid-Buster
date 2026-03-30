@@ -311,71 +311,130 @@ private struct GameOverOverlay: View {
                 }
 
                 // Buttons
-                VStack(spacing: 10) {
-                    Button(action: {
+                VStack(spacing: 12) {
+                    NeonGameOverButton(
+                        title:      "Play Again",
+                        systemIcon: "arrow.counterclockwise",
+                        accentColor: Color(red: 0.0, green: 0.6, blue: 1.0),
+                        glowColor:   Color(red: 0.0, green: 1.0, blue: 1.0)
+                    ) {
                         GameStateManager.shared.clearState()
                         playAgain()
-                    }) {
-                        Label("Play Again", systemImage: "arrow.counterclockwise")
-                            .font(.system(size: 17, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 15)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color(red: 0, green: 0.9, blue: 1), Color(red: 0, green: 0.6, blue: 1)],
-                                    startPoint: .leading, endPoint: .trailing
-                                ),
-                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.70), lineWidth: 1.5)
-                            )
-                            .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.40), radius: 14, x: 0, y: 6)
                     }
 
-                    Button(action: goHome) {
-                        Label("Main Menu", systemImage: "house.fill")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.92))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 13)
-                            .background(
-                                Color.white.opacity(0.08),
-                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color(red: 1, green: 0, blue: 1).opacity(0.45), lineWidth: 1.5)
-                            )
+                    NeonGameOverButton(
+                        title:      "Watch Ad",
+                        systemIcon: "play.rectangle.fill",
+                        accentColor: Color(red: 0.0, green: 0.8, blue: 0.4),
+                        glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0)
+                    ) {
+                        // TODO: Implement Watch Ad functionality
+                        print("Watch Ad clicked")
+                    }
+
+                    NeonGameOverButton(
+                        title:      "Main Menu",
+                        systemIcon: "house.fill",
+                        accentColor: Color(red: 0.8, green: 0.0, blue: 0.6),
+                        glowColor:   Color(red: 1.0, green: 0.0, blue: 1.0)
+                    ) {
+                        goHome()
                     }
                 }
             }
             .padding(.horizontal, 22)
-            .padding(.vertical, 20)
-            .frame(maxWidth: 320)
+            .padding(.vertical, 24)
+            .frame(maxWidth: 340)
             .background(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .fill(Color(red: 0x10/255, green: 0x10/255, blue: 0x10/255))
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.22, green: 0.02, blue: 0.12), // Dark Pink/Magenta
+                                Color(red: 0.10, green: 0.01, blue: 0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 0, green: 1, blue: 1).opacity(0.65),
-                                        Color(red: 1, green: 0, blue: 1).opacity(0.55)
+                                        Color(red: 1, green: 0, blue: 1).opacity(0.60),
+                                        Color(red: 0, green: 1, blue: 1).opacity(0.40)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 1.5
+                                lineWidth: 2
                             )
                     )
             )
-            .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.20), radius: 30, x: 0, y: 16)
+            .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.25), radius: 30, x: 0, y: 16)
             .shadow(color: .black.opacity(0.6), radius: 40, x: 0, y: 24)
         }
+    }
+}
+
+// MARK: - NeonGameOverButton
+
+private struct NeonGameOverButton: View {
+    let title:       String
+    let systemIcon:  String
+    let accentColor: Color
+    let glowColor:   Color
+    let action:      () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 0) {
+                // Left icon container
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.black.opacity(0.35))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
+
+                    Image(systemName: systemIcon)
+                        .font(.system(size: 16, weight: .black))
+                        .foregroundStyle(.white)
+                        .shadow(color: glowColor.opacity(0.6), radius: 4)
+                }
+                .padding(.leading, 12)
+
+                // Label
+                Text(title)
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.trailing, 10)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .background(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(accentColor.opacity(0.15))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .stroke(glowColor.opacity(0.8), lineWidth: 2.5)
+            )
+            .shadow(color: glowColor.opacity(0.5), radius: 10)
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.65)) {
+                isPressed = pressing
+            }
+        }, perform: {})
     }
 }
 
@@ -391,10 +450,14 @@ private struct GameOverScoreRow: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(tint)
-                .shadow(color: tint.opacity(0.55), radius: 6)
-                .frame(width: 36, height: 36)
-                .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .foregroundStyle(.white)
+                .shadow(color: tint.opacity(0.8), radius: 4)
+                .frame(width: 40, height: 40)
+                .background(tint.opacity(0.25), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(tint.opacity(0.4), lineWidth: 1.5)
+                )
 
             Text(label)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
