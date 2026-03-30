@@ -107,12 +107,43 @@ struct SettingsView: View {
                         }
 
                         SettingsActionRow(
-                            icon:        "gearshape.2.fill",
-                            title:       "More Settings",
+                            icon:        "info.circle.fill",
+                            title:       "More Info",
                             buttonTitle: "Open",
                             buttonColor: .green
                         ) {
                             showMore = true
+                        }
+
+                        // ── Utilities section ─────────────────────────────
+                        sectionLabel("UTILITIES")
+                            .padding(.top, 6)
+
+                        SettingsActionRow(
+                            icon:        "square.and.arrow.up.fill",
+                            title:       "Share App",
+                            buttonTitle: "Send",
+                            buttonColor: .blue
+                        ) {
+                            shareApp()
+                        }
+
+                        SettingsActionRow(
+                            icon:        "envelope.fill",
+                            title:       "Contact Support",
+                            buttonTitle: "Mail",
+                            buttonColor: .blue
+                        ) {
+                            contactSupport()
+                        }
+
+                        SettingsActionRow(
+                            icon:        "star.fill",
+                            title:       "Rate Us",
+                            buttonTitle: "Rate",
+                            buttonColor: .blue
+                        ) {
+                            rateApp()
                         }
 
                         }
@@ -221,6 +252,36 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 4)
         .padding(.top, 4)
+    }
+
+    // MARK: - Handlers
+
+    private func shareApp() {
+        let text = "Check out Neon Grid Buster! It's an amazing neon-style puzzle game."
+        let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(av, animated: true)
+        }
+    }
+
+    private func contactSupport() {
+        let email = "aniqasafdar6@gmail.com"
+        let subject = "Neon Grid Buster - Support Request"
+        let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        if let url = URL(string: mailto) {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func rateApp() {
+        // Placeholder App ID
+        let appId = "0000000000"
+        let urlStr = "https://apps.apple.com/app/id\(appId)?action=write-review"
+        if let url = URL(string: urlStr) {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
