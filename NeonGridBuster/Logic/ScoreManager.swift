@@ -38,6 +38,11 @@ final class ScoreManager: ObservableObject {
         isGameOver      = false
     }
 
+    func restoreState(score: Int, combo: Int) {
+        self.score = score
+        self.combo = combo
+    }
+
     // MARK: - Tiered Line Score (Prompt 3.3)
 
     /// Exponential line-clear points matching spec exactly.

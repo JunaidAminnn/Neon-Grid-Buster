@@ -11,6 +11,7 @@ final class GameScene: SKScene {
     private let grid = GridManager()
     private let generator = BlockGenerator()
     private let scoreManager: ScoreManager
+    private let gameStateManager: GameStateManager
 
     private let gridLayer = SKNode()
     private let placedLayer = SKNode()
@@ -64,8 +65,9 @@ final class GameScene: SKScene {
     /// Optional adventure-level pre-fill (nil = normal free-play).
     private var adventurePreset: [[NeonColor?]]?
 
-    init(scoreManager: ScoreManager, adventurePreset: [[NeonColor?]]? = nil) {
+    init(scoreManager: ScoreManager, gameStateManager: GameStateManager, adventurePreset: [[NeonColor?]]? = nil) {
         self.scoreManager    = scoreManager
+        self.gameStateManager = gameStateManager
         self.adventurePreset = adventurePreset
         super.init(size: CGSize(width: 390, height: 844))
         scaleMode        = .resizeFill
@@ -129,17 +131,50 @@ final class GameScene: SKScene {
             tray[i] = nil
             trayData[i] = nil
         }
-        scoreManager.reset()
-        currentPaletteIndex = 0
-        paletteColorCursor  = 0
-        if let preset = adventurePreset {
-            grid.loadPreset(preset)
+        
+        if adventurePreset == nil, let saved = gameStateManager.savedState {
+            // Restore from saved state
+            scoreManager.restoreState(score: saved.score, combo: saved.combo)
+            currentPaletteIndex = saved.currentPaletteIndex
+            paletteColorCursor = saved.paletteColorCursor
+
+            var loadedGrid: [[NeonColor?]] = Array(repeating: Array(repeating: nil, count: GridManager.gridSize), count: GridManager.gridSize)
+            for r in 0..<GridManager.gridSize {
+                for c in 0..<GridManager.gridSize {
+                    if let raw = saved.gridCells[r][c] {
+                        loadedGrid[r][c] = NeonColor(rawValue: raw)
+                    }
+                }
+            }
+            grid.loadPreset(loadedGrid)
             renderPreset()
+
+            // Restore tray
+            for i in 0..<3 {
+                if let shapeID = saved.trayShapeIDs[i], let colorRaw = saved.trayColors[i], let shape = ShapeLibrary.shape(for: shapeID), let color = NeonColor(rawValue: colorRaw) {
+                    trayData[i] = (shape: shape, color: color)
+                } else {
+                    trayData[i] = nil
+                }
+            }
+            rebuildTrayNodesForCurrentSize()
+            layoutTray()
+            checkGameOverIfNeeded()
         } else {
-            // Classic mode: put a few random shapes so the grid isn't empty
-            placeRandomStartingBlocks()
+            scoreManager.reset()
+            currentPaletteIndex = 0
+            paletteColorCursor  = 0
+            if let preset = adventurePreset {
+                grid.loadPreset(preset)
+                renderPreset()
+                refillTray()
+            } else {
+                // Classic mode: put a few random shapes so the grid isn't empty
+                placeRandomStartingBlocks()
+                refillTray()
+            }
+            saveCurrentState()
         }
-        refillTray()
     }
 
     // MARK: - Starting Blocks (Classic Mode)
@@ -548,6 +583,7 @@ final class GameScene: SKScene {
         cleanupDrag(keepTrayPulseReset: true)
 
         checkGameOverIfNeeded()
+        saveCurrentState()
     }
 
     private func cleanupDrag(keepTrayPulseReset: Bool = false) {
@@ -877,5 +913,23 @@ final class GameScene: SKScene {
         let hasMove = grid.anyMovePossible(shapes: shapes)
         // Bidirectional assignment: also clears a false-positive from pre-clear check
         scoreManager.isGameOver = !hasMove
+    }
+
+    private func saveCurrentState() {
+        if adventurePreset != nil { return }
+        
+        if scoreManager.isGameOver {
+            gameStateManager.clearState()
+            return
+        }
+        
+        gameStateManager.saveState(
+            score: scoreManager.score,
+            combo: scoreManager.combo,
+            paletteIndex: currentPaletteIndex,
+            paletteCursor: paletteColorCursor,
+            grid: grid.cells,
+            tray: trayData
+        )
     }
 }

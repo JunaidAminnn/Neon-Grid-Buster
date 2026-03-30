@@ -131,7 +131,7 @@ struct ArcadeBlueBackgroundView: View {
     }
 }
 
-enum NeonColor: CaseIterable, Hashable {
+enum NeonColor: String, CaseIterable, Hashable, Codable {
     case cyan
     case purple
     case pink

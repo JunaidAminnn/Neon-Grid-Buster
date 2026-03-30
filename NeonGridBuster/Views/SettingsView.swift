@@ -97,6 +97,7 @@ struct SettingsView: View {
                             buttonTitle: "Play",
                             buttonColor: .green
                         ) {
+                            GameStateManager.shared.clearState()
                             if let onReplay { onReplay() }
                             dismiss()
                         }

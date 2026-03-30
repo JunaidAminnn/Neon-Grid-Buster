@@ -63,11 +63,12 @@ let activeGameTheme: GameTheme = .neonMidnight
 @MainActor
 final class GameContainer: ObservableObject {
     let scoreManager = ScoreManager()
+    let gameStateManager = GameStateManager.shared
     let scene: GameScene
     private var cancellable: AnyCancellable?
 
     init(adventurePreset: [[NeonColor?]]? = nil) {
-        scene = GameScene(scoreManager: scoreManager, adventurePreset: adventurePreset)
+        scene = GameScene(scoreManager: scoreManager, gameStateManager: gameStateManager, adventurePreset: adventurePreset)
         cancellable = scoreManager.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
         }
@@ -311,7 +312,10 @@ private struct GameOverOverlay: View {
 
                 // Buttons
                 VStack(spacing: 10) {
-                    Button(action: playAgain) {
+                    Button(action: {
+                        GameStateManager.shared.clearState()
+                        playAgain()
+                    }) {
                         Label("Play Again", systemImage: "arrow.counterclockwise")
                             .font(.system(size: 17, weight: .black, design: .rounded))
                             .foregroundStyle(.white)

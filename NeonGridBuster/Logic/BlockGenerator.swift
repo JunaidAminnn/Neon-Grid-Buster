@@ -352,6 +352,11 @@ enum ShapeLibrary {
 
     /// All shapes joined — used for full-difficulty sampling.
     static let all: [ShapeEntry] = easy + medium + hard + brutal
+    
+    /// Lookup a shape by its unique string identifier (used for state deserialization).
+    static func shape(for id: String) -> BlockShape? {
+        return all.first(where: { $0.shape.id == id })?.shape
+    }
 }
 
 // MARK: - BlockGenerator
