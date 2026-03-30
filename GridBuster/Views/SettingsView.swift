@@ -154,20 +154,8 @@ struct SettingsView: View {
                 }
             }
             .frame(maxWidth: 360)
-            .background(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.04), .clear],
-                                    startPoint: .top, endPoint: .center
-                                )
-                            )
-                    )
-            )
-            // Cyan neon border (the key brand element)
+            .background(Theme.Palette.panelBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(
@@ -182,7 +170,6 @@ struct SettingsView: View {
                         lineWidth: 2.5
                     )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             // Neon outer glow on the container
             .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.30 : 0.14), radius: 24, x: 0, y: 0)
             .shadow(color: Color.black.opacity(0.55), radius: 40, x: 0, y: 22)

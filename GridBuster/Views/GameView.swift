@@ -345,31 +345,20 @@ private struct GameOverOverlay: View {
             .padding(.horizontal, 22)
             .padding(.vertical, 24)
             .frame(maxWidth: 340)
-            .background(
+            .background(Theme.Palette.panelBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
+                    .stroke(
                         LinearGradient(
                             colors: [
-                                Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255), // Very Dark Purple (#240021)
-                                Color(red: 0x1A/255, green: 0x00/255, blue: 0x18/255)
+                                Color(red: 1, green: 0, blue: 1).opacity(0.60),
+                                Color(red: 0, green: 1, blue: 1).opacity(0.40)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 1, green: 0, blue: 1).opacity(0.60),
-                                        Color(red: 0, green: 1, blue: 1).opacity(0.40)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
+                        ),
+                        lineWidth: 2.5
                     )
             )
             .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.25), radius: 30, x: 0, y: 16)

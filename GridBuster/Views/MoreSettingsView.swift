@@ -90,17 +90,8 @@ struct MoreSettingsView: View {
     // MARK: - Panel Background / Border
 
     private var panelBackground: some View {
-        RoundedRectangle(cornerRadius: 26, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255), // Dark Purple #240021
-                        Color(red: 0x15/255, green: 0x00/255, blue: 0x12/255)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+        Theme.Palette.panelBackground
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
     }
 
     private var panelBorder: some View {
@@ -114,7 +105,7 @@ struct MoreSettingsView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                lineWidth: 2
+                lineWidth: 2.5
             )
     }
 
