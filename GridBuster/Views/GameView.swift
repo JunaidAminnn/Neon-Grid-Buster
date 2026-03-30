@@ -335,8 +335,8 @@ private struct GameOverOverlay: View {
                     NeonGameOverButton(
                         title:      "Main Menu",
                         systemIcon: "house.fill",
-                        accentColor: Color(red: 0.8, green: 0.0, blue: 0.6),
-                        glowColor:   Color(red: 1.0, green: 0.0, blue: 1.0)
+                        accentColor: Color(red: 1.0, green: 0.72, blue: 0.0), // Golden Yellow
+                        glowColor:   Color(red: 1.0, green: 0.95, blue: 0.0)  // Bright Neon Yellow
                     ) {
                         goHome()
                     }
@@ -350,8 +350,8 @@ private struct GameOverOverlay: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.22, green: 0.02, blue: 0.12), // Dark Pink/Magenta
-                                Color(red: 0.10, green: 0.01, blue: 0.05)
+                                Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255), // Very Dark Purple (#240021)
+                                Color(red: 0x1A/255, green: 0x00/255, blue: 0x18/255)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
