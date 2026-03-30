@@ -86,8 +86,8 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "More Games",
                                     systemIcon: "gamecontroller.fill",
-                                    accentColor: Color(red: 1.00, green: 0.3, blue: 1.00),  // Light pink
-                                    glowColor:   Color(red: 1.00, green: 0.0, blue: 1.00),  // Neon pink
+                                    accentColor: Color(red: 1.0, green: 0.75, blue: 0.85),  // Soft pastel pink
+                                    glowColor:   Color(red: 1.0, green: 0.5, blue: 0.75),   // Bright light pink glow
                                     isPressed:   moreGamesPress
                                 )
                             }
