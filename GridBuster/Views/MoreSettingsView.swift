@@ -285,7 +285,7 @@ struct MoreSettingsView: View {
     }
     
     private func contactSupport() {
-        let email = "support@shafeekstudios.com"
+        let email = "aniqasafdar6@gmail.com"
         let subject = "Neon Grid Buster Bug Report"
         let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         if let url = URL(string: mailto) {

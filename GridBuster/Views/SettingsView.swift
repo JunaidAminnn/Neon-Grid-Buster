@@ -330,10 +330,11 @@ private struct SettingsToggleRow: View {
                 )
                 .animation(.easeInOut(duration: 0.2), value: isOn)
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(Color.white.opacity(0.05))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(
