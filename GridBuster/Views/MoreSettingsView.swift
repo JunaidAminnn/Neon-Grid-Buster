@@ -23,7 +23,12 @@ struct MoreSettingsView: View {
 
     @State private var borderPulse  = false
     @State private var panelVisible = false
-    @State private var safariURL: URL? = nil
+    @State private var safariItem:  URLItem? = nil
+
+    struct URLItem: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     private let placeholderURL = "https://docs.google.com/spreadsheets/d/1" // Placeholder Google Sheet
@@ -75,8 +80,8 @@ struct MoreSettingsView: View {
                 borderPulse = true
             }
         }
-        .sheet(item: $safariURL) { url in
-            SafariView(url: url)
+        .sheet(item: $safariItem) { item in
+            SafariView(url: item.url)
                 .ignoresSafeArea()
         }
         .navigationBarHidden(true)
@@ -245,7 +250,7 @@ struct MoreSettingsView: View {
     private func linkRow(title: String, url: String) -> some View {
         Button {
             if let targetURL = URL(string: url) {
-                self.safariURL = targetURL
+                self.safariItem = URLItem(url: targetURL)
             }
         } label: {
             HStack {
@@ -327,10 +332,6 @@ struct MoreSettingsView: View {
     }
 }
 
-// MARK: - URL identification for sheet
-extension URL: Identifiable {
-    public var id: String { self.absoluteString }
-}
 
 // MARK: - Preview
 
