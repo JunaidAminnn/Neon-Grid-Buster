@@ -23,9 +23,10 @@ struct MoreSettingsView: View {
 
     @State private var borderPulse  = false
     @State private var panelVisible = false
+    @State private var safariURL: URL? = nil
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let buildNum   = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    private let placeholderURL = "https://docs.google.com/spreadsheets/d/1" // Placeholder Google Sheet
 
     // MARK: - Body
 
@@ -45,10 +46,12 @@ struct MoreSettingsView: View {
                     VStack(spacing: 0) {
                         appIdentityBlock
                         neonDivider.padding(.vertical, 8)
-                        socialLinksBlock
+                        
+                        utilityButtonsBlock
                         neonDivider.padding(.vertical, 8)
-                        legalLinksBlock
-                        neonDivider.padding(.vertical, 8)
+                        
+                        linksBlock
+                        
                         adBannerPlaceholder
                             .padding(.bottom, 20)
                     }
@@ -59,7 +62,7 @@ struct MoreSettingsView: View {
             .frame(maxWidth: 400)
             .background(panelBackground)
             .overlay(panelBorder)
-            .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.28 : 0.12), radius: 28)
+            .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(borderPulse ? 0.30 : 0.15), radius: 24)
             .shadow(color: .black.opacity(0.60), radius: 44, x: 0, y: 24)
             .padding(.horizontal, 16)
             .scaleEffect(panelVisible ? 1.0 : 0.88)
@@ -72,6 +75,10 @@ struct MoreSettingsView: View {
                 borderPulse = true
             }
         }
+        .sheet(item: $safariURL) { url in
+            SafariView(url: url)
+                .ignoresSafeArea()
+        }
         .navigationBarHidden(true)
     }
 
@@ -82,11 +89,11 @@ struct MoreSettingsView: View {
             .fill(
                 LinearGradient(
                     colors: [
-                        Color(red: 0x00/255, green: 0x0D/255, blue: 0x1A/255),
-                        Color(red: 0x00/255, green: 0x07/255, blue: 0x12/255),
+                        Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255), // Dark Purple #240021
+                        Color(red: 0x15/255, green: 0x00/255, blue: 0x12/255)
                     ],
-                    startPoint: .top,
-                    endPoint: .bottom
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
             )
     }
@@ -96,14 +103,13 @@ struct MoreSettingsView: View {
             .stroke(
                 LinearGradient(
                     colors: [
-                        Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.90 : 0.55),
-                        Color(red: 0, green: 0.65, blue: 1).opacity(borderPulse ? 0.65 : 0.30),
-                        Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.90 : 0.55),
+                        Color(red: 1, green: 0, blue: 1).opacity(borderPulse ? 0.80 : 0.45),
+                        Color(red: 0, green: 1, blue: 1).opacity(borderPulse ? 0.60 : 0.25),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                lineWidth: 1.8
+                lineWidth: 2
             )
     }
 
@@ -111,37 +117,34 @@ struct MoreSettingsView: View {
         Rectangle()
             .fill(
                 LinearGradient(
-                    colors: [.clear, Color(red: 0, green: 1, blue: 1).opacity(0.30), .clear],
+                    colors: [.clear, Color(red: 1, green: 0, blue: 1).opacity(0.20), .clear],
                     startPoint: .leading, endPoint: .trailing
                 )
             )
-            .frame(height: 1)
+            .frame(height: 1.5)
     }
 
     // MARK: - Header Bar
 
     private var headerBar: some View {
         HStack {
-            // Balance spacer
             Color.clear.frame(width: 36, height: 36)
             Spacer()
 
             Text("MORE INFO")
                 .font(.system(size: 18, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.95))
-                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.45), radius: 8)
+                .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.45), radius: 8)
 
             Spacer()
 
-            // Close button
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .black))
                     .foregroundStyle(.white.opacity(0.90))
                     .frame(width: 36, height: 36)
-                    .background(Color.white.opacity(0.10), in: Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.16), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.30), radius: 6)
+                    .background(Color.white.opacity(0.12), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.20), lineWidth: 1.5))
             }
         }
         .padding(.horizontal, 16)
@@ -151,198 +154,163 @@ struct MoreSettingsView: View {
     // MARK: - App Identity Block
 
     private var appIdentityBlock: some View {
-        VStack(spacing: 10) {
-            // App "logo" — styled block cluster matching game aesthetic
+        VStack(spacing: 12) {
+            // App "logo"
             ZStack {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(
                         LinearGradient(
-                            colors: [Color(red: 0, green: 1, blue: 1), Color(red: 0, green: 0.6, blue: 1)],
+                            colors: [Color(red: 1, green: 0, blue: 1), Color(red: 0, green: 1, blue: 1)],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 68, height: 68)
+                    .frame(width: 72, height: 72)
                     .overlay(
                         RoundedRectangle(cornerRadius: 18)
-                            .fill(LinearGradient(
-                                colors: [Color.white.opacity(0.32), .clear],
-                                startPoint: .topLeading, endPoint: .center
-                            ))
+                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(Color.white.opacity(0.22), lineWidth: 1.5)
-                    )
-                    .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.55), radius: 16)
+                    .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.5), radius: 12)
 
-                VStack(spacing: 2) {
-                    Text("NGB")
-                        .font(.system(size: 19, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                }
+                Image(systemName: "grid.reveal")
+                    .font(.system(size: 32, weight: .black))
+                    .foregroundStyle(.white)
             }
 
-            // App name
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Text("NEON GRID BUSTER")
-                    .font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.95))
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
                     .tracking(2)
-                    .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.40), radius: 6)
-
-                Text("by Shafeek Studios")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.40))
-
-                Text("Version \(appVersion)  (\(buildNum))")
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                    .foregroundStyle(Color(red: 0, green: 1, blue: 1).opacity(0.50))
-                    .padding(.top, 4)
+                
+                Text("Version \(appVersion)")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.4))
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
+        .padding(.vertical, 20)
     }
 
-    // MARK: - Social Links
-
-    private struct SocialLink: Identifiable {
-        let id         = UUID()
-        let icon:  String        // SF Symbol name
-        let label: String
-        let urlStr: String
-        let color: Color
-    }
-
-    private let socialLinks: [SocialLink] = [
-        SocialLink(icon: "play.rectangle.fill", label: "TikTok",   urlStr: "https://tiktok.com",   color: Color(red: 1.0, green: 0.0, blue: 0.55)),
-        SocialLink(icon: "bubble.left.and.bubble.right.fill", label: "Discord", urlStr: "https://discord.com", color: Color(red: 0.40, green: 0.46, blue: 0.94)),
-        SocialLink(icon: "xmark.circle.fill",  label: "X (Twitter)", urlStr: "https://x.com",   color: Color(red: 0.8,  green: 0.8,  blue: 0.8)),
-        SocialLink(icon: "person.2.fill",      label: "Facebook",  urlStr: "https://facebook.com", color: Color(red: 0.26, green: 0.52, blue: 0.96)),
-        SocialLink(icon: "play.tv.fill",       label: "YouTube",   urlStr: "https://youtube.com",  color: Color(red: 1.0, green: 0.18, blue: 0.18)),
-    ]
-
-    private var socialLinksBlock: some View {
-        VStack(spacing: 4) {
-            moreLabel("FOLLOW US")
-
-            ForEach(socialLinks) { link in
-                Button {
-                    if let url = URL(string: link.urlStr) { openURL(url) }
-                } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: link.icon)
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(link.color)
-                            .frame(width: 42, height: 42)
-                            .background(link.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(link.color.opacity(0.28), lineWidth: 1)
-                            )
-                            .shadow(color: link.color.opacity(0.40), radius: 8)
-
-                        Text(link.label)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.90))
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.25))
-                    }
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 12)
-                    .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                    )
+    // MARK: - Utility Buttons
+    
+    private var utilityButtonsBlock: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                // Share App
+                utilityButton(title: "Share App", icon: "square.and.arrow.up.fill", color: .cyan) {
+                    shareApp()
                 }
-                .buttonStyle(.plain)
+                
+                // Found a Bug
+                utilityButton(title: "Found a Bug", icon: "ant.fill", color: .pink) {
+                    contactSupport()
+                }
             }
         }
     }
-
-    // MARK: - Legal Links
-
-    private struct LegalLink: Identifiable {
-        let id    = UUID()
-        let title: String
-        let urlStr: String
+    
+    private func utilityButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .black))
+                Text(title)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 80)
+            .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(color.opacity(0.4), lineWidth: 2)
+            )
+            .shadow(color: color.opacity(0.2), radius: 8)
+        }
     }
 
-    private let legalLinks: [LegalLink] = [
-        LegalLink(title: "Privacy Policy",    urlStr: "https://example.com/privacy"),
-        LegalLink(title: "Terms of Service",  urlStr: "https://example.com/terms"),
-        LegalLink(title: "Cookie Policy",     urlStr: "https://example.com/cookies"),
-        LegalLink(title: "Support",           urlStr: "mailto:support@shafeeekstudios.com"),
-        LegalLink(title: "License Info",      urlStr: "https://example.com/license"),
-    ]
+    // MARK: - Links Block
 
-    private var legalLinksBlock: some View {
-        VStack(spacing: 4) {
-            moreLabel("LEGAL & SUPPORT")
-
-            ForEach(legalLinks) { link in
-                Button {
-                    if let url = URL(string: link.urlStr) { openURL(url) }
-                } label: {
-                    HStack {
-                        Text(link.title)
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color(red: 0, green: 1, blue: 1).opacity(0.90))
-
-                        Spacer()
-
-                        Text("›")
-                            .font(.system(size: 20, weight: .black))
-                            .foregroundStyle(Color(red: 0, green: 1, blue: 1).opacity(0.55))
-                    }
-                    .padding(.vertical, 13)
-                    .padding(.horizontal, 16)
-                    .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.12), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
+    private var linksBlock: some View {
+        VStack(spacing: 10) {
+            moreLabel("UTILITIES & LEGAL")
+            
+            linkRow(title: "About Us", url: placeholderURL)
+            linkRow(title: "Terms & Policy", url: placeholderURL)
+            linkRow(title: "Privacy Policy", url: placeholderURL)
+            linkRow(title: "Terms of Use", url: placeholderURL)
+        }
+        .padding(.vertical, 10)
+    }
+    
+    private func linkRow(title: String, url: String) -> some View {
+        Button {
+            if let targetURL = URL(string: url) {
+                self.safariURL = targetURL
             }
+        } label: {
+            HStack {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.9))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundStyle(Color(red: 1, green: 0, blue: 1).opacity(0.5))
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
+        }
+    }
+
+    // MARK: - Handlers
+    
+    private func shareApp() {
+        let text = "Check out Neon Grid Buster! It's an awesome neon-style puzzle game."
+        let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(av, animated: true)
+        }
+    }
+    
+    private func contactSupport() {
+        let email = "support@shafeekstudios.com"
+        let subject = "Neon Grid Buster Bug Report"
+        let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        if let url = URL(string: mailto) {
+            UIApplication.shared.open(url)
         }
     }
 
     // MARK: - Ad Banner Placeholder
 
     private var adBannerPlaceholder: some View {
-        VStack(spacing: 6) {
-            moreLabel("ADS")
+        VStack(spacing: 8) {
+            moreLabel("SPONSOR")
 
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white.opacity(0.03))
+                    .fill(Color.white.opacity(0.04))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(
-                                style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
-                            )
-                            .foregroundStyle(Color.white.opacity(0.14))
+                            .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                            .foregroundStyle(Color.white.opacity(0.15))
                     )
 
-                VStack(spacing: 6) {
-                    Image(systemName: "rectangle.and.hand.point.up.left")
-                        .font(.system(size: 24))
-                        .foregroundStyle(.white.opacity(0.18))
-                    Text("Ad Banner Placeholder")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.18))
-                }
-                .padding(.vertical, 24)
+                Text("AD SPACE")
+                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.15))
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 90)
+            .frame(height: 60)
         }
+        .padding(.top, 10)
     }
 
     // MARK: - Section Label Helper
@@ -351,14 +319,17 @@ struct MoreSettingsView: View {
         HStack {
             Text(text)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(Color(red: 0, green: 1, blue: 1).opacity(0.50))
-                .tracking(5)
+                .foregroundStyle(.white.opacity(0.35))
+                .tracking(4)
             Spacer()
         }
         .padding(.horizontal, 4)
-        .padding(.bottom, 4)
-        .padding(.top, 2)
     }
+}
+
+// MARK: - URL identification for sheet
+extension URL: Identifiable {
+    public var id: String { self.absoluteString }
 }
 
 // MARK: - Preview

@@ -71,11 +71,6 @@ struct SettingsView: View {
                             title: "Vibration",
                             isOn:  $hapticsEnabled
                         )
-                        SettingsToggleRow(
-                            icon:  "square.on.square",
-                            title: "Ghost Preview",
-                            isOn:  $ghostEnabled
-                        )
 
                         // ── Navigation section ────────────────────────────
                         sectionLabel("NAVIGATION")
@@ -120,22 +115,8 @@ struct SettingsView: View {
                             showMore = true
                         }
 
-                        // ── Skin section ──────────────────────────────────
-                        sectionLabel("APPEARANCE")
-                            .padding(.top, 6)
-
-                        SettingsActionRow(
-                            icon:        "paintpalette.fill",
-                            title:       "Default Skin",
-                            buttonTitle: skinSelected ? "Applied" : "Apply",
-                            buttonColor: .blue
-                        ) {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                skinSelected = true
-                            }
                         }
 
-                    }
                     .padding(.horizontal, 14)
                     .padding(.top, 12)
                     .padding(.bottom, 20)
@@ -144,9 +125,9 @@ struct SettingsView: View {
             .frame(maxWidth: 380)
             .background(
                 ZStack {
-                    // Smoky dark base #121212
+                    // Very dark purple background (#240021)
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(Color(red: 0x12/255, green: 0x12/255, blue: 0x12/255))
+                        .fill(Color(red: 0x24/255, green: 0x00/255, blue: 0x21/255))
 
                     // Subtle inner highlight
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -275,7 +256,7 @@ private struct SettingsToggleRow: View {
 
             Spacer(minLength: 0)
 
-            // Cyan-tinted toggle
+            // High-visibility neon-tinted toggle
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .tint(Color(red: 0, green: 1, blue: 1))
@@ -289,10 +270,9 @@ private struct SettingsToggleRow: View {
                 .animation(.easeInOut(duration: 0.2), value: isOn)
         }
         .padding(.vertical, 11)
-        .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.05))
+                .fill(Color.white.opacity(0.12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(
