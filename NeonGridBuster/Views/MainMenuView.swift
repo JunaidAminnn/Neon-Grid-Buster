@@ -30,10 +30,9 @@ struct MainMenuView: View {
 
     // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // ── Background ─────────────────────────────────────────
-                MenuBackground(pulse: glowPulse)
+        ZStack {
+            // ── Background ─────────────────────────────────────────
+            MenuBackground(pulse: glowPulse)
 
                 // ── Content ────────────────────────────────────────────
                 GeometryReader { geo in
@@ -109,7 +108,6 @@ struct MainMenuView: View {
                 buttonsVisible = true
                 glowPulse      = true
             }
-        }
     }
 
     // MARK: - Logo

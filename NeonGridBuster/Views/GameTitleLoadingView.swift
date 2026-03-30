@@ -37,16 +37,18 @@ struct GameTitleLoadingView: View {
 
     // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
-        ZStack {
-            if navigateToMenu {
-                MainMenuView(namespace: logoNamespace)
-                    .transition(.opacity)
-            } else {
-                titleScreen
-                    .transition(.opacity)
+        NavigationStack {
+            ZStack {
+                if navigateToMenu {
+                    MainMenuView(namespace: logoNamespace)
+                        .transition(.opacity)
+                } else {
+                    titleScreen
+                        .transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.6), value: navigateToMenu)
         }
-        .animation(.easeInOut(duration: 0.6), value: navigateToMenu)
     }
 
     // MARK: - Title Screen
