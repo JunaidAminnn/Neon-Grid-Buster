@@ -92,45 +92,45 @@ struct StudioSplashView: View {
 
     /// "SHAFEEK SOLUTIONS" split vertically and scaled to exact matching width
     private var studioNameText: some View {
-        VStack(spacing: -6) {
-            neonWord("SHAFEEK")
-            neonWord("SOLUTIONS")
+        VStack(spacing: -4) {
+            neonWord("SHAFEEK", size: 45)
+            neonWord("SOLUTIONS", size: 35)
         }
         .padding(.horizontal, 40)
         .tracking(6)
         .padding(.leading, 6)
     }
 
-    private func neonWord(_ text: String) -> some View {
+    private func neonWord(_ text: String, size: CGFloat) -> some View {
         ZStack {
             // Outer soft glow layers (bloom)
             Text(text)
-                .font(.system(size: 48, weight: .black, design: .rounded))
+                .font(.system(size: size, weight: .black, design: .rounded))
                 .lineLimit(1)
-                .minimumScaleFactor(0.1)
+                .minimumScaleFactor(0.5)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1))
                 .blur(radius: 28)
                 .opacity(glowPulse ? 0.85 : 0.55)
 
             Text(text)
-                .font(.system(size: 48, weight: .black, design: .rounded))
+                .font(.system(size: size, weight: .black, design: .rounded))
                 .lineLimit(1)
-                .minimumScaleFactor(0.1)
+                .minimumScaleFactor(0.5)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1))
                 .blur(radius: 14)
                 .opacity(0.70)
 
             // Tight inner glow
             Text(text)
-                .font(.system(size: 48, weight: .black, design: .rounded))
+                .font(.system(size: size, weight: .black, design: .rounded))
                 .lineLimit(1)
-                .minimumScaleFactor(0.1)
+                .minimumScaleFactor(0.5)
                 .foregroundStyle(Color(red: 1, green: 0, blue: 1).opacity(0.60))
                 .blur(radius: 5)
 
             // Crisp white core text
             Text(text)
-                .font(.system(size: 48, weight: .black, design: .rounded))
+                .font(.system(size: size, weight: .black, design: .rounded))
                 .lineLimit(1)
                 .minimumScaleFactor(0.1)
                 .foregroundStyle(
