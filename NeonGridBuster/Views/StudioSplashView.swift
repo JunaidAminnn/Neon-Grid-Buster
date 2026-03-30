@@ -81,8 +81,8 @@ struct StudioSplashView: View {
             logoVisible = true
             glowPulse   = true
 
-            // After 2 seconds transition to main menu
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // After 1.6 seconds transition to main menu (reduced from 2.0s)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
                 navigateToMenu = true
             }
         }

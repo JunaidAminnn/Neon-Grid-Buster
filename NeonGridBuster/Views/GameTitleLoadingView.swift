@@ -349,10 +349,13 @@ private struct AnimatedBlockCluster: View {
 
     @State private var shapeIndex = 0
     @State private var rotation: Double = 0
+    
+    @State private var shapeSequence: [[(col: Int, row: Int)]] = []
+    @State private var colorSequence: [Color] = []
 
     var body: some View {
-        let currentShape = shapes[shapeIndex % shapes.count]
-        let currentColor = colors[shapeIndex % colors.count]
+        let currentShape = shapeSequence.isEmpty ? shapes[0] : shapeSequence[shapeIndex % shapeSequence.count]
+        let currentColor = colorSequence.isEmpty ? colors[0] : colorSequence[shapeIndex % colorSequence.count]
 
         ZStack {
             // Glow halo
@@ -392,6 +395,10 @@ private struct AnimatedBlockCluster: View {
         .scaleEffect(bounce ? 1.0 : 0.88)
         .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: bounce)
         .task {
+            if shapeSequence.isEmpty {
+                shapeSequence = shapes.shuffled()
+                colorSequence = colors.shuffled()
+            }
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 800_000_000) // 0.80 seconds
                 await MainActor.run {

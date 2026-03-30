@@ -62,8 +62,8 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "Adventure",
                                     systemIcon: "clock.fill",
-                                    accentColor: Color(red: 0.3, green: 0.85, blue: 0.3),   // Light green
-                                    glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0),    // Bright green
+                                    accentColor: Color(red: 0.3, green: 0.7, blue: 1.0),    // Light blue
+                                    glowColor:   Color(red: 0.0, green: 0.8, blue: 1.0),    // Bright cyan
                                     isPressed:   adventurePress
                                 )
                             }
@@ -74,8 +74,8 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "Classic",
                                     systemIcon: "infinity",
-                                    accentColor: Color(red: 0.85, green: 0.85, blue: 0.3),  // Light yellow
-                                    glowColor:   Color(red: 1.0, green: 1.0, blue: 0.0),    // Bright yellow
+                                    accentColor: Color(red: 0.3, green: 0.85, blue: 0.3),   // Light green
+                                    glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0),    // Bright green
                                     isPressed:   classicPress
                                 )
                             }
@@ -86,8 +86,8 @@ struct MainMenuView: View {
                                 ModeButton(
                                     title:      "More Games",
                                     systemIcon: "gamecontroller.fill",
-                                    accentColor: Color(red: 0.3, green: 0.7, blue: 1.0),    // Light blue
-                                    glowColor:   Color(red: 0.0, green: 0.8, blue: 1.0),    // Bright cyan
+                                    accentColor: Color(red: 1.00, green: 0.3, blue: 1.00),  // Light pink
+                                    glowColor:   Color(red: 1.00, green: 0.0, blue: 1.00),  // Neon pink
                                     isPressed:   moreGamesPress
                                 )
                             }
