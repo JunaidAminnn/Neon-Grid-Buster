@@ -403,11 +403,11 @@ final class BlockGenerator {
             return colorise(shapes)
         }
     }
-    /// Generates exactly 3 "easy" shapes for the tray (mercy mode for ad continuation).
     func generateEasyTray() -> [BlockShape] {
         let easyShapes = ShapeLibrary.easy.map(\.shape)
+        guard !easyShapes.isEmpty else { return [] }
         // Draw 3 random easy shapes
-        return (0..<3).map { _ in easyShapes.randomElement(using: &rng) ?? easyShapes[0] }
+        return (0..<3).compactMap { _ in easyShapes.randomElement(using: &rng) ?? easyShapes.first }
     }
 
     // MARK: - Mercy Tray Generation

@@ -68,7 +68,7 @@ final class AdventureGameScene: SKScene {
         self.engine = engine
         super.init(size: CGSize(width: 390, height: 844))
         scaleMode       = .resizeFill
-        backgroundColor = UIColor(red: 0.07, green: 0.09, blue: 0.20, alpha: 1) // dark navy
+        backgroundColor = .clear // Transparent to show SwiftUI Arcade Blue
     }
 
     required init?(coder: NSCoder) { return nil }
@@ -172,8 +172,8 @@ final class AdventureGameScene: SKScene {
         let bgH = cellSize * CGFloat(GridManager.gridSize) + bgPad * 2
         let bg  = SKShapeNode(rectOf: CGSize(width: bgW, height: bgH),
                               cornerRadius: cellSize * 0.20)
-        bg.fillColor   = SKColor(red: 0.07, green: 0.09, blue: 0.20, alpha: 1)
-        bg.strokeColor = SKColor(red: 0.20, green: 0.22, blue: 0.40, alpha: 0.70)
+        bg.fillColor   = SKColor(red: 0x05 / 255, green: 0x0A / 255, blue: 0x14 / 255, alpha: 0.60)
+        bg.strokeColor = SKColor(white: 1.0, alpha: 0.15)
         bg.lineWidth   = max(1.0, cellSize * 0.06)
         bg.position    = CGPoint(
             x: gridOrigin.x + cellSize * CGFloat(GridManager.gridSize) * 0.5,
@@ -189,8 +189,8 @@ final class AdventureGameScene: SKScene {
                     rectOf: CGSize(width: cellSize * 0.90, height: cellSize * 0.90),
                     cornerRadius: cellSize * 0.18
                 )
-                slot.fillColor   = SKColor(red: 0.10, green: 0.13, blue: 0.28, alpha: 1.0)
-                slot.strokeColor = SKColor(red: 0.25, green: 0.27, blue: 0.45, alpha: 0.70)
+                slot.fillColor   = SKColor(red: 0x0B / 255, green: 0x0E / 255, blue: 0x1A / 255, alpha: 0.50)
+                slot.strokeColor = SKColor(white: 1.0, alpha: 0.08)
                 slot.lineWidth   = max(1.0, cellSize * 0.04)
                 slot.position    = positionForCell(row: row, col: col)
                 slot.zPosition   = 0
@@ -233,6 +233,7 @@ final class AdventureGameScene: SKScene {
     // MARK: - Cell Node Factories
 
     /// Standard 5-layer bevel block — same as Classic Mode.
+    /// Standard 5-layer bevel block — same as Classic Mode.
     private func makePlacedCellNode(color: NeonColor, isTarget: Bool) -> SKShapeNode {
         let container = SKShapeNode()
         container.zPosition   = 10
@@ -243,11 +244,49 @@ final class AdventureGameScene: SKScene {
         let corner   = cellSize * 0.20
         let bevelW   = max(1.5, cellSize * 0.12)
 
-        // 1 — base fill (slightly muted for targets — linen/sandy look)
+        if isTarget {
+            // ── Target Gem Rendering ──
+            let gem = TargetGem.allCases.first { $0.neonColor == color } ?? .emerald
+            
+            // 1. Large Outer Glow Bloom
+            let glow = SKShapeNode(rectOf: fullSize, cornerRadius: corner)
+            glow.fillColor = SKColor.neon(color).withAlphaComponent(0.25)
+            glow.strokeColor = .clear
+            glow.glowWidth = 12
+            glow.zPosition = 1
+            container.addChild(glow)
+            
+            // 2. High-intensity Neon Ring
+            let ring = SKShapeNode(rectOf: fullSize, cornerRadius: corner)
+            ring.fillColor = .clear
+            ring.strokeColor = SKColor.neon(color)
+            ring.lineWidth = 2.5
+            ring.glowWidth = 2
+            ring.zPosition = 2
+            container.addChild(ring)
+            
+            // 3. Gem Shape (Crystal cut)
+            let gemNode = GemFactory.makeGemShapeNode(for: gem, size: cellSize * 0.72)
+            gemNode.fillColor = SKColor.neon(color).withAlphaComponent(1.0)
+            gemNode.strokeColor = .white
+            gemNode.lineWidth = 1.0
+            gemNode.zPosition = 5
+            container.addChild(gemNode)
+            
+            // 4. Brilliant Inner Core (Point of Light)
+            let core = SKShapeNode(circleOfRadius: cellSize * 0.12)
+            core.fillColor = .white
+            core.strokeColor = .clear
+            core.glowWidth = 3
+            core.zPosition = 6
+            container.addChild(core)
+            
+            return container
+        }
+
+        // 1 — base fill (Normal block)
         let fill = SKShapeNode(rectOf: fullSize, cornerRadius: corner)
-        fill.fillColor   = isTarget
-            ? SKColor(red: 0.72, green: 0.60, blue: 0.40, alpha: 0.90)   // sandy gold
-            : SKColor.neon(color).withAlphaComponent(0.82)
+        fill.fillColor   = SKColor.neon(color).withAlphaComponent(0.82)
         fill.strokeColor = .clear
         fill.lineWidth   = 0
         fill.zPosition   = 1
@@ -540,14 +579,26 @@ final class AdventureGameScene: SKScene {
         let commonCS = trayCellSize(for: shapes)
 
         for i in 0..<3 {
-            if engine.trayData[i] == nil {
-                tray[i]?.removeFromParent()
+            let data = engine.trayData[i]
+            let currentNode = tray[i]
+            
+            let gem = engine.trayGems[i]
+            if data == nil {
+                currentNode?.removeFromParent()
                 tray[i] = nil
-            } else if tray[i] == nil, let item = engine.trayData[i] {
-                // Slot was refilled
-                let node = BlockNode(shape: item.shape, color: item.color, cellSize: commonCS)
-                tray[i] = node
-                trayLayer.addChild(node)
+            } else if let item = data {
+                // If shape, color, or gem changed, replace it
+                if let node = currentNode, (node.shape.id != item.shape.id || node.color != item.color || node.gem != gem) {
+                    node.removeFromParent()
+                    tray[i] = nil
+                }
+                
+                // Recreate if nil (either was nil or just cleared above)
+                if tray[i] == nil {
+                    let newNode = BlockNode(shape: item.shape, color: item.color, cellSize: commonCS, gem: gem)
+                    tray[i] = newNode
+                    trayLayer.addChild(newNode)
+                }
             }
         }
         layoutTray()
@@ -681,6 +732,7 @@ final class AdventureGameScene: SKScene {
         }
         return nil
     }
+
 
     private func nearestCellOffset(in node: BlockNode, atScenePoint scenePoint: CGPoint) -> BlockCell {
         let local = CGPoint(x: scenePoint.x - node.position.x,

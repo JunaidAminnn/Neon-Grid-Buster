@@ -37,7 +37,7 @@ struct AdventureGameView: View {
     @State private var gemBumpScale:  [TargetGem: CGFloat] = [:]
 
     // ── Colours (Adventure skin – warm dark blue, not pitch black) ────────
-    private let canvasColor = Color(red: 0.07, green: 0.09, blue: 0.20)
+    private let canvasColor = Color(red: 0x0B / 255, green: 0x0C / 255, blue: 0x10 / 255)
 
     // MARK: - Init
 
@@ -51,7 +51,7 @@ struct AdventureGameView: View {
     var body: some View {
         ZStack {
             // ── Background ──────────────────────────────────────────────
-            canvasColor.ignoresSafeArea()
+            ArcadeBlueBackgroundView()
 
             // ── SpriteKit Scene ─────────────────────────────────────────
             if let scene {
@@ -138,43 +138,42 @@ struct AdventureGameView: View {
         VStack(spacing: 10) {
 
             // ── Row 1: Back | Level title | Gear ─────────────────────────
-            HStack(alignment: .center) {
-                // Back button
+            HStack(alignment: .center, spacing: 0) {
+                // ── Back Button ───────────────────────────────────────
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .black))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .frame(width: 38, height: 38)
-                        .background(Color.white.opacity(0.10), in: Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                        .font(.system(size: 26, weight: .bold)) // Slightly larger for clarity
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .contentShape(Rectangle())
+                        .shadow(color: .black.opacity(0.4), radius: 4)
                 }
 
                 Spacer()
 
-                // Level title
-                Text(engine.currentLevel.title.uppercased())
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.50))
-                    .tracking(4)
+                Spacer()
+
+                // Removing Level Title as requested
+                // Text(engine.currentLevel.title.uppercased())
 
                 Spacer()
 
-                // Gear
+                // ── Settings Button ──────────────────────────────────
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.80))
-                        .frame(width: 38, height: 38)
-                        .background(Color.white.opacity(0.10), in: Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .contentShape(Rectangle())
+                        .shadow(color: .black.opacity(0.4), radius: 4)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.top, 8) // Moved higher as requested (from 28)
 
             // ── Row 2: Target Gem Tracker ─────────────────────────────────
             targetTracker
         }
-        .padding(.top, 18)
+        .padding(.top, -10) // Moved up 20px (from 10) as requested to avoid grid overlap
     }
 
     // MARK: - Target Tracker
@@ -186,7 +185,7 @@ struct AdventureGameView: View {
             engine.currentLevel.targets[$0] != nil
         }
 
-        return HStack(spacing: 24) {
+        return HStack(spacing: 42) { // More spacing for centered look
             ForEach(gemOrder, id: \.self) { gem in
                 TargetGemBadge(
                     gem:       gem,
@@ -196,16 +195,7 @@ struct AdventureGameView: View {
                 )
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 28)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
+        .padding(.top, 2) // Shifted up for better grid clearance
         .padding(.horizontal, 20)
     }
 
@@ -251,46 +241,29 @@ struct TargetGemBadge: View {
     private var gemSwiftUIColor: Color { Theme.neonColor(gem.neonColor) }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) { // Tighter spacing for icon-above-number
 
-            // ── Gem icon ────────────────────────────────────────────────
+            // ── Gem icon (exactly mirroring the grid designs) ──────────
             ZStack {
-                // Outer glow bloom
-                Circle()
-                    .fill(gemSwiftUIColor.opacity(isCleared ? 0.0 : 0.25))
-                    .frame(width: 52, height: 52)
-                    .blur(radius: 10)
-
-                // Icon container
-                ZStack {
-                    Circle()
-                        .fill(gemSwiftUIColor.opacity(isCleared ? 0.08 : 0.18))
-                    Circle()
-                        .stroke(gemSwiftUIColor.opacity(isCleared ? 0.18 : 0.65), lineWidth: 2)
-
-                    Image(systemName: gem.systemImage)
-                        .font(.system(size: 22, weight: .black))
-                        .foregroundStyle(isCleared ? .white.opacity(0.22) : gemSwiftUIColor)
-                        .shadow(color: gemSwiftUIColor.opacity(isCleared ? 0 : 0.90), radius: 8)
-                }
-                .frame(width: 46, height: 46)
-
+                GemIconView(gem: gem, size: 40, isCleared: isCleared)
+                    .scaleEffect(bumpScale)
+                
                 // Tick overlay when cleared
                 if isCleared {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .black))
-                        .foregroundStyle(.white.opacity(0.80))
-                        .shadow(color: .white.opacity(0.4), radius: 4)
+                        .font(.system(size: 18, weight: .black))
+                        .foregroundStyle(Color(red: 0, green: 1, blue: 0.5))
+                        .shadow(color: Color(red: 0, green: 1, blue: 0.5).opacity(0.8), radius: 6)
                 }
             }
-            .scaleEffect(bumpScale)
+            .frame(width: 44, height: 44)
 
             // ── Count ────────────────────────────────────────────────────
             Text("\(remaining)")
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(isCleared ? .white.opacity(0.30) : gemSwiftUIColor)
+                .font(.system(size: 28, weight: .black, design: .rounded))
+                .foregroundStyle(isCleared ? .white.opacity(0.20) : .white)
                 .contentTransition(.numericText())
-                .shadow(color: gemSwiftUIColor.opacity(isCleared ? 0 : 0.70), radius: 6)
+                .shadow(color: gemSwiftUIColor.opacity(isCleared ? 0 : 0.80), radius: 8)
         }
     }
 }
@@ -350,10 +323,10 @@ private struct LevelWonOverlay: View {
                 HStack(spacing: 10) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Color(red: 0, green: 1, blue: 1))
-                        .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.80), radius: 4)
+                        .foregroundStyle(.white)
+                        .shadow(color: .white.opacity(0.40), radius: 4)
                         .frame(width: 36, height: 36)
-                        .background(Color(red: 0, green: 1, blue: 1).opacity(0.15),
+                        .background(Color.white.opacity(0.15),
                                     in: RoundedRectangle(cornerRadius: 10))
 
                     Text("SCORE")
@@ -375,26 +348,19 @@ private struct LevelWonOverlay: View {
                     .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.18), lineWidth: 1))
 
                 // ── Buttons ───────────────────────────────────────────────
-                VStack(spacing: 10) {
+                VStack(spacing: 12) {
                     NeonGameOverButton(
                         title:       "Next Level",
                         systemIcon:  "arrow.right",
-                        accentColor: Color(red: 0, green: 0.75, blue: 0.35),
-                        glowColor:   Color(red: 0, green: 1, blue: 0.4)
+                        accentColor: Theme.Palette.neonLime.opacity(0.75),
+                        glowColor:   Theme.Palette.neonLime
                     ) { nextLevel() }
-
-                    NeonGameOverButton(
-                        title:       "Play Again",
-                        systemIcon:  "arrow.counterclockwise",
-                        accentColor: Color(red: 0, green: 0.6, blue: 1.0),
-                        glowColor:   Color(red: 0, green: 1, blue: 1)
-                    ) { playAgain() }
 
                     NeonGameOverButton(
                         title:       "Main Menu",
                         systemIcon:  "house.fill",
-                        accentColor: Color(red: 1.0, green: 0.72, blue: 0.0),
-                        glowColor:   Color(red: 1.0, green: 0.95, blue: 0.0)
+                        accentColor: Theme.Palette.neonBlue.opacity(0.70),
+                        glowColor:   Theme.Palette.neonBlue
                     ) { goHome() }
                 }
             }

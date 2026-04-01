@@ -1,5 +1,5 @@
 import SwiftUI
-import GoogleMobileAds
+// import GoogleMobileAds
 
 struct BannerAdView: View {
     let adUnitID: String

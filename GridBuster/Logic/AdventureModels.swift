@@ -28,6 +28,8 @@ enum TargetGem: String, CaseIterable, Codable, Hashable {
     case emerald        // 💎 green diamond  – neon lime/cyan colour
     case star           // ⭐ yellow star
     case orangePentagon // 🔶 orange pentagon
+    case blueSapphire   // 🔷 blue hexagon / sapphire
+    case redRuby        // 🔴 red ruby / heart
 
     /// SF Symbol name used in the HUD counter badge.
     var systemImage: String {
@@ -35,15 +37,19 @@ enum TargetGem: String, CaseIterable, Codable, Hashable {
         case .emerald:        return "diamond.fill"
         case .star:           return "star.fill"
         case .orangePentagon: return "pentagon.fill"
+        case .blueSapphire:   return "hexagon.fill"
+        case .redRuby:        return "suit.heart.fill"
         }
     }
 
     /// Associated neon colour used to tint the gem's grid cell.
     var neonColor: NeonColor {
         switch self {
-        case .emerald:        return .lime
-        case .star:           return .yellow
+        case .emerald:        return .cyan
+        case .star:           return .purple
         case .orangePentagon: return .orange
+        case .blueSapphire:   return .cyan
+        case .redRuby:        return .red
         }
     }
 }
@@ -176,27 +182,47 @@ enum AdventureRegistry {
     /// Reference: fourth screenshot — stars (top/corners) and pentagons (middle rows).
     static let level2 = AdventureLevel(
         id: 2,
-        title: "Star & Pentagon",
-        subtitle: "Clear 4 stars and 4 pentagons",
+        title: "Neon Mix",
+        subtitle: "Clear 4 stars and 4 rubies",
         initialGrid: buildGrid(targets: [
             // Stars — along the top and vertical axis
             (row: 0, col: 2, gem: .star),
             (row: 0, col: 5, gem: .star),
             (row: 2, col: 0, gem: .star),
             (row: 2, col: 7, gem: .star),
-            // Pentagons — mid-grid
-            (row: 4, col: 2, gem: .orangePentagon),
-            (row: 4, col: 5, gem: .orangePentagon),
-            (row: 6, col: 0, gem: .orangePentagon),
-            (row: 6, col: 7, gem: .orangePentagon),
+            // Rubies — mid-grid
+            (row: 4, col: 2, gem: .redRuby),
+            (row: 4, col: 5, gem: .redRuby),
+            (row: 6, col: 0, gem: .redRuby),
+            (row: 6, col: 7, gem: .redRuby),
         ]),
-        targets: [.star: 4, .orangePentagon: 4]
+        targets: [.star: 4, .redRuby: 4]
+    )
+
+    /// Level 3 — "Jewel Collection"
+    /// 3 sapphires + 3 pentagons + 3 emeralds.
+    static let level3 = AdventureLevel(
+        id: 3,
+        title: "Jewel Collection",
+        subtitle: "9 gems to collect",
+        initialGrid: buildGrid(targets: [
+            (row: 1, col: 1, gem: .blueSapphire),
+            (row: 1, col: 6, gem: .blueSapphire),
+            (row: 3, col: 3, gem: .blueSapphire),
+            (row: 5, col: 1, gem: .orangePentagon),
+            (row: 5, col: 3, gem: .orangePentagon),
+            (row: 5, col: 6, gem: .orangePentagon),
+            (row: 7, col: 2, gem: .emerald),
+            (row: 7, col: 4, gem: .emerald),
+            (row: 7, col: 6, gem: .emerald),
+        ]),
+        targets: [.blueSapphire: 3, .orangePentagon: 3, .emerald: 3]
     )
 
     // ── Registry ──────────────────────────────────────────────────────────
 
     /// Ordered list of all available levels.
-    static let all: [AdventureLevel] = [level1, level2]
+    static let all: [AdventureLevel] = [level1, level2, level3]
 
     /// Returns the level with the given 1-indexed ID, or nil if out of range.
     static func level(for id: Int) -> AdventureLevel? {
@@ -269,11 +295,17 @@ final class AdventureGridManager: ObservableObject {
     }
 
     /// Places `shape` on the grid and returns the list of placed `GridPoint`s.
+    /// In Adventure Mode, a tray block can optionally carry a `TargetGem`.
     @discardableResult
-    func place(shape: BlockShape, color: NeonColor, at origin: GridPoint) -> [GridPoint] {
+    func place(shape: BlockShape, color: NeonColor, at origin: GridPoint, gem: TargetGem? = nil) -> [GridPoint] {
         let placed = core.place(shape: shape, color: color, at: origin)
-        for p in placed {
-            cellStates[p.row][p.col] = .normal(color)
+        for (idx, p) in placed.enumerated() {
+            if idx == 0, let g = gem {
+                // This cell becomes a target gem pre-placed inside the block
+                cellStates[p.row][p.col] = .target(g)
+            } else {
+                cellStates[p.row][p.col] = .normal(color)
+            }
         }
         return placed
     }

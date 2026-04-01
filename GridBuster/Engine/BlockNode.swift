@@ -27,11 +27,13 @@ final class BlockNode: SKNode {
     }
 
     private var cells: [CellLayers] = []
+    private(set) var gem: TargetGem?
 
-    init(shape: BlockShape, color: NeonColor, cellSize: CGFloat) {
+    init(shape: BlockShape, color: NeonColor, cellSize: CGFloat, gem: TargetGem? = nil) {
         self.shape    = shape
         self.color    = color
         self.cellSize = cellSize
+        self.gem      = gem
         super.init()
         isUserInteractionEnabled = false
         build()
@@ -46,7 +48,7 @@ final class BlockNode: SKNode {
         let fullSize = CGSize(width: cellSize * 0.90, height: cellSize * 0.90)
         let bevelW   = max(1.5, cellSize * 0.12)   // bevel stripe thickness
 
-        for cell in shape.cells {
+        for (idx, cell) in shape.cells.enumerated() {
             let container = SKNode()
             container.position = CGPoint(
                 x: (CGFloat(cell.x) + 0.5) * cellSize,
@@ -70,8 +72,6 @@ final class BlockNode: SKNode {
             highlight.strokeColor = .clear
             highlight.lineWidth   = 0
             highlight.zPosition   = 2
-            // Clip to top-left half via position offset + alpha — approximated
-            // by an inner rect shifted up-left and masked by the corner radius
             highlight.position = CGPoint(x: -bevelW * 0.5, y: bevelW * 0.5)
             highlight.blendMode = .add
             container.addChild(highlight)
@@ -102,6 +102,35 @@ final class BlockNode: SKNode {
             neonRing.glowWidth   = max(1.0, cellSize * 0.08)    // subtle neon bloom
             neonRing.zPosition   = 4
             container.addChild(neonRing)
+
+            // ── Layer 6: Embedded Gem (Adventure Mode) ────────────────────
+            if idx == 0, let g = gem {
+                let gemColor = SKColor.neon(g.neonColor)
+                
+                // Outer glow bloom
+                let glow = SKShapeNode(rectOf: fullSize, cornerRadius: corner)
+                glow.fillColor = gemColor.withAlphaComponent(0.20)
+                glow.strokeColor = .clear
+                glow.glowWidth = 8
+                glow.zPosition = 10
+                container.addChild(glow)
+                
+                // Crystal shape
+                let gemNode = GemFactory.makeGemShapeNode(for: g, size: cellSize * 0.72)
+                gemNode.fillColor = gemColor.withAlphaComponent(1.0)
+                gemNode.strokeColor = .white
+                gemNode.lineWidth = 1.0
+                gemNode.zPosition = 11
+                container.addChild(gemNode)
+                
+                // Inner core sparkle
+                let core = SKShapeNode(circleOfRadius: cellSize * 0.12)
+                core.fillColor = .white
+                core.strokeColor = .clear
+                core.glowWidth = 2
+                core.zPosition = 12
+                container.addChild(core)
+            }
 
             cells.append(CellLayers(
                 fill:      fillNode,

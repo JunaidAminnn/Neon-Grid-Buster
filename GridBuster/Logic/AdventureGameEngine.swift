@@ -185,10 +185,13 @@ final class AdventureGameEngine: ObservableObject {
         at origin:  GridPoint,
         trayIndex:  Int
     ) {
-        // 1. Place on the adventure grid
-        let placed = grid.place(shape: shape, color: color, at: origin)
+        // 1. Get the gem (if any) from this tray slot
+        let gemInTray = trayGems[trayIndex]
 
-        // 2. Clear filled lines & collect any gems that were cleared
+        // 2. Place on the adventure grid (carry the gem over)
+        let placed = grid.place(shape: shape, color: color, at: origin, gem: gemInTray)
+
+        // 3. Clear filled lines & collect any gems that were cleared
         let cleared = grid.clearFilledLines()
         let gemsCleared = grid.lastClearedGems
 

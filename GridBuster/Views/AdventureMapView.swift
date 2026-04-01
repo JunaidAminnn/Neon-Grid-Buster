@@ -115,31 +115,46 @@ struct AdventureMapView: View {
     private var topBar: some View {
         HStack {
             Button { dismiss() } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 14, weight: .black))
+                HStack(spacing: 10) {
+                    // Inset neon ring for icon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.black.opacity(0.35))
+                            .frame(width: 34, height: 34)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                            )
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundStyle(.white)
+                    }
+                    
                     Text("MENU")
-                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.95))
                         .tracking(3)
                 }
-                .foregroundStyle(Color(red: 0, green: 1, blue: 1))
-                .padding(.vertical, 9)
-                .padding(.horizontal, 14)
-                .background(Color.white.opacity(0.06),
-                            in: RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.35), lineWidth: 1)
+                .padding(.leading, 8)
+                .padding(.trailing, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.white.opacity(0.06))
                 )
-                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.22), radius: 8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color(red: 0, green: 1, blue: 1), lineWidth: 2.5)
+                )
+                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.50), radius: 12)
             }
 
             Spacer()
 
             Text("ADVENTURE")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.28))
-                .tracking(5)
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.40))
+                .tracking(6)
         }
         .padding(.horizontal, 20)
         .padding(.top, 58)
@@ -200,11 +215,11 @@ struct AdventureMapView: View {
 
     private var keepWinningLabel: some View {
         HStack(spacing: 0) {
-            // "Keep " in cyan
+            // "Keep " in white with shadow
             Text("Keep ")
                 .font(.system(size: 26, weight: .black, design: .rounded))
-                .foregroundStyle(Color(red: 0, green: 1, blue: 1))
-                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.60), radius: 10)
+                .foregroundStyle(.white)
+                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.80), radius: 12)
 
             // "Winning!" in neon pink
             Text("Winning!")
@@ -343,43 +358,42 @@ struct AdventureMapView: View {
                 navigateToGame = true
             }
         } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 18, weight: .black))
+            HStack(spacing: 0) {
+                // Inset neon ring for icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.black.opacity(0.35))
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.white.opacity(0.20), lineWidth: 1)
+                        )
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundStyle(.white)
+                }
+                .padding(.leading, 12)
+                
                 Text(levelButtonTitle)
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .tracking(4)
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .tracking(6)
+                    .frame(maxWidth: .infinity)
+                    .padding(.trailing, 10)
             }
-            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
+            .frame(height: 78)
             .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.95, blue: 0.30),
-                        Color(red: 0.00, green: 0.75, blue: 0.20),
-                    ],
-                    startPoint: .top,
-                    endPoint:   .bottom
-                ),
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color(red: 1, green: 0, blue: 0.8).opacity(0.18))
             )
             .overlay(
-                // Bevel highlight
-                LinearGradient(
-                    colors: [Color.white.opacity(0.26), Color.clear],
-                    startPoint: .top, endPoint: .center
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color(red: 1, green: 0, blue: 0.8), lineWidth: 3.5)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color(red: 0, green: 1, blue: 0.4).opacity(0.80), lineWidth: 1.5)
-            )
-            .shadow(color: Color(red: 0, green: 1, blue: 0).opacity(glowPulse ? 0.72 : 0.42),
-                    radius: glowPulse ? 22 : 14, x: 0, y: 6)
-            .shadow(color: Color(red: 0, green: 1, blue: 0).opacity(0.25), radius: 40, x: 0, y: 12)
-            .scaleEffect(buttonPressed ? 0.96 : 1.0)
+            .shadow(color: Color(red: 1, green: 0, blue: 0.8).opacity(glowPulse ? 0.75 : 0.45),
+                    radius: glowPulse ? 22 : 14)
+            .scaleEffect(buttonPressed ? 0.94 : 1.0)
         }
         .padding(.horizontal, 30)
     }

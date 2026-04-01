@@ -1,6 +1,6 @@
 import Foundation
-import UserMessagingPlatform
-import GoogleMobileAds
+// import UserMessagingPlatform
+// import GoogleMobileAds
 import UIKit
 import Combine
 
@@ -11,6 +11,7 @@ enum ConsentStatus: String {
     case denied
 }
 
+@MainActor
 class ConsentManager: ObservableObject {
     static let shared = ConsentManager()
     
@@ -33,68 +34,18 @@ class ConsentManager: ObservableObject {
     }
     
     func requestConsent(from viewController: UIViewController? = nil, completion: @escaping (ConsentStatus) -> Void) {
-        let parameters = RequestParameters()
+        #if DEBUG
+        print("AdMob: Consent requested (MOCKED)")
+        #endif
         
-        // 1. Request updated consent information
-        ConsentInformation.shared.requestConsentInfoUpdate(with: parameters) { [weak self] error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                #if DEBUG
-                print("AdMob: Consent update error: \(error.localizedDescription)")
-                #endif
-                DispatchQueue.main.async {
-                    self.canRequestAds = true
-                    self.consentStatus = .consented
-                    self.saveConsentStatus()
-                    self.consentGatheringComplete = true
-                    completion(.consented)
-                }
-                return
-            }
-            
-            // 2. Load and present the consent form if required
-            ConsentForm.loadAndPresentIfRequired(from: viewController) { [weak self] error in
-                guard let self = self else { return }
-                
-                if let error = error {
-                    #if DEBUG
-                    print("AdMob: Consent form error: \(error.localizedDescription)")
-                    #endif
-                }
-                
-                DispatchQueue.main.async {
-                    let status = self.determineConsentStatus()
-                    self.consentStatus = status
-                    self.saveConsentStatus()
-                    
-                    if ConsentInformation.shared.canRequestAds {
-                        self.canRequestAds = true
-                    }
-                    
-                    self.consentGatheringComplete = true
-                    completion(status)
-                }
-            }
+        // Mocking successful consent info update and form presentation
+        DispatchQueue.main.async {
+            self.canRequestAds = true
+            self.consentStatus = .consented
+            self.saveConsentStatus()
+            self.consentGatheringComplete = true
+            completion(.consented)
         }
-    }
-    
-    private func determineConsentStatus() -> ConsentStatus {
-        let consentInfo = ConsentInformation.shared
-        
-        if consentInfo.canRequestAds {
-            return .consented
-        }
-        
-        if consentInfo.consentStatus == .required {
-            return .denied
-        }
-        
-        if consentInfo.consentStatus == .notRequired || consentInfo.consentStatus == .obtained {
-            return .consented
-        }
-        
-        return .notDetermined
     }
     
     private func saveConsentStatus() {
@@ -110,7 +61,6 @@ class ConsentManager: ObservableObject {
     
     #if DEBUG
     func resetConsent() {
-        ConsentInformation.shared.reset()
         consentStatus = .notDetermined
         canRequestAds = false
         consentGatheringComplete = false
