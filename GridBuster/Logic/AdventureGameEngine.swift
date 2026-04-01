@@ -2,17 +2,19 @@
 //  AdventureGameEngine.swift
 //  NeonGridBuster
 //
-//  Adventure Mode — Game Engine (Prompt 1)
+//  Adventure Mode — Game Engine (Prompts 1 & 2)
 //  ─────────────────────────────────────────────────────────────────────────
 //  A self-contained ObservableObject that drives a single Adventure level.
 //
 //  Responsibilities:
 //   • Load a level from AdventureRegistry and initialise the grid.
 //   • Manage the tray of 3 draggable block shapes (reuses BlockGenerator).
+//   • Gem-embedded tray spawner: ~30 % chance per slot injects a required
+//     target gem into one cell of the shape (see Prompt 2 spec screenshots).
 //   • Track `remainingTargets` — a live counter per gem type.
 //   • Set `isLevelWon`  when all targets reach 0.
 //   • Set `isGameOver` when no tray piece can fit anywhere on the grid.
-//   • Expose helpers for the view layer (GameScene adapter) to call.
+//   • Expose helpers for multi-level navigation (loadLevel(id:)).
 //
 
 import Foundation
@@ -56,6 +58,11 @@ final class AdventureGameEngine: ObservableObject {
     /// Current tray of up to 3 shapes (nil slot = consumed).
     @Published private(set) var trayData: [(shape: BlockShape, color: NeonColor)?] = [nil, nil, nil]
 
+    /// Which gem (if any) is embedded in each tray slot.
+    /// Nil means the slot is a normal coloured block; non-nil means the
+    /// block visually carries a target-gem icon (shown to the player).
+    @Published private(set) var trayGems: [TargetGem?] = [nil, nil, nil]
+
     // ── Private ───────────────────────────────────────────────────────────
 
     private var lastMoveCleared = false
@@ -90,14 +97,26 @@ final class AdventureGameEngine: ObservableObject {
         startLevel()
     }
 
+    /// Switch to a different level without recreating the engine.
+    func loadLevel(id: Int) {
+        guard let level = AdventureRegistry.level(for: id) else { return }
+        currentLevel = level
+        startLevel()
+    }
+
     // MARK: - Tray Management
 
-    /// Generates 3 new shapes and colours for the tray.
+    /// Generates 3 new shapes + colours for the tray.
+    ///
+    /// **Gem-embedded spawner (Prompt 2)**:
+    /// Each slot has a ~30 % chance of receiving an embedded target gem,
+    /// provided there are still remaining targets of that type.
+    /// Embedded gems are stored in `trayGems[i]` for the view layer to render.
     func refillTray() {
-        // Use a temporary GridManager copy for the generator's mercy-check
         let tempGrid = buildTempGrid()
         let rawItems = generator.generateTray(score: score, grid: tempGrid)
         trayData = rawItems.map { $0 }
+        trayGems = (0..<3).map { i in injectGem(forSlot: i) }
         checkGameOverIfNeeded()
     }
 
@@ -105,9 +124,31 @@ final class AdventureGameEngine: ObservableObject {
     func consumeTrayItem(at index: Int) {
         precondition(index >= 0 && index < 3)
         trayData[index] = nil
+        trayGems[index] = nil
         if trayData.allSatisfy({ $0 == nil }) {
             refillTray()
         }
+    }
+
+    // MARK: - Gem Injection
+
+    /// Returns a `TargetGem` to embed in tray slot `i`, or nil for a plain block.
+    ///
+    /// Logic:
+    ///  1. Collect gem types that still have remaining targets.
+    ///  2. Randomly decide (30 % base chance) whether to inject one.
+    ///  3. Prefer gem types with the highest remaining count (most urgent).
+    private func injectGem(forSlot _: Int) -> TargetGem? {
+        // Only inject if there are outstanding targets
+        let pending = remainingTargets.filter { $0.value > 0 }
+        guard !pending.isEmpty else { return nil }
+
+        // 30 % chance to embed a gem
+        guard Double.random(in: 0..<1) < 0.30 else { return nil }
+
+        // Pick the gem type with the most remaining (or random among ties)
+        let sorted = pending.sorted { $0.value > $1.value }
+        return sorted.first?.key
     }
 
     // MARK: - Move Application
