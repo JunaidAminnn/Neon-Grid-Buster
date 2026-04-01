@@ -73,17 +73,22 @@ struct GemIconView: View {
                 .blur(radius: isCleared ? 0 : 10)
                 .scaleEffect(isCleared ? 1.0 : 1.25)
             
-            // 2. High-intensity Edge Stroke
+            // 2. High-intensity Edge Stroke (Vibrant Neon)
             GemShape(gem: gem)
-                .stroke(isCleared ? .white.opacity(0.15) : .white, lineWidth: 2.2)
+                .stroke(color.opacity(isCleared ? 0.20 : 1.0), lineWidth: 2.2)
                 .shadow(color: color.opacity(isCleared ? 0.1 : 0.95), radius: isCleared ? 0 : 5)
-            
-            // 3. Main Faceted Body (Solid neon based)
+
+            // 3. Inner White Specular Ring (Thin)
             GemShape(gem: gem)
-                .fill(color.opacity(isCleared ? 0.20 : 0.90))
+                .stroke(Color.white.opacity(isCleared ? 0.1 : 0.6), lineWidth: 0.8)
+                .scaleEffect(0.94)
+            
+            // 4. Main Faceted Body (Solid neon based)
+            GemShape(gem: gem)
+                .fill(color.opacity(isCleared ? 0.20 : 1.0))
                 .scaleEffect(0.88)
             
-            // 4. Brilliant Inner Core (White sparkle)
+            // 5. Brilliant Inner Core (White sparkle)
             Circle()
                 .fill(.white.opacity(isCleared ? 0.15 : 0.95))
                 .frame(width: size * 0.22, height: size * 0.22)

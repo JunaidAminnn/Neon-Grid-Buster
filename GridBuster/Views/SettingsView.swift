@@ -123,7 +123,7 @@ struct SettingsView: View {
                             icon:        "square.and.arrow.up.fill",
                             title:       "Share App",
                             buttonTitle: "Send",
-                            buttonColor: .yellow
+                            buttonColor: .blue
                         ) {
                             shareApp()
                         }
@@ -141,7 +141,7 @@ struct SettingsView: View {
                             icon:        "star.fill",
                             title:       "Rate Us",
                             buttonTitle: "Rate",
-                            buttonColor: .green
+                            buttonColor: .blue
                         ) {
                             rateApp()
                         }

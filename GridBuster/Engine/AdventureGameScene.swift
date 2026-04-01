@@ -330,15 +330,20 @@ final class AdventureGameScene: SKScene {
         return container
     }
 
-    /// Target gem cell: sandy base + bright coloured gem icon overlay + pulsing glow.
     private func makeTargetGemNode(gem: TargetGem) -> SKShapeNode {
         let color    = gem.neonColor
-        let gemColor = SKColor.neon(color)
-
-        // Base sandy tile
+        
         let container = makePlacedCellNode(color: color, isTarget: true)
+        let icon = makeTargetGemIcon(gem: gem)
+        container.addChild(icon)
 
-        // Gem icon — a diamond/star/pentagon drawn as a small glowing circle
+        return container
+    }
+
+    /// Helper for adding a pulsing gem icon to any node
+    private func makeTargetGemIcon(gem: TargetGem) -> SKShapeNode {
+        let color    = gem.neonColor
+        let gemColor = SKColor.neon(color)
         let iconRadius = cellSize * 0.20
         let icon = SKShapeNode(circleOfRadius: iconRadius)
         icon.fillColor   = gemColor.withAlphaComponent(0.90)
@@ -347,16 +352,16 @@ final class AdventureGameScene: SKScene {
         icon.glowWidth   = cellSize * 0.20
         icon.zPosition   = 6
         icon.name        = "gemIcon"
-        container.addChild(icon)
+        animateGemPulse(icon)
+        return icon
+    }
 
-        // Pulse the icon
+    private func animateGemPulse(_ node: SKNode) {
         let pulse = SKAction.sequence([
             .scale(to: 1.18, duration: 0.70),
             .scale(to: 1.00, duration: 0.70),
         ])
-        icon.run(.repeatForever(pulse))
-
-        return container
+        node.run(.repeatForever(pulse))
     }
 
     // MARK: - Tray
@@ -446,7 +451,8 @@ final class AdventureGameScene: SKScene {
         node.setDimmed(true)
 
         guard let item = engine.trayData[index] else { return }
-        let drag = BlockNode(shape: item.shape, color: item.color, cellSize: cellSize)
+        let gem = engine.trayGems[index]
+        let drag = BlockNode(shape: item.shape, color: item.color, cellSize: cellSize, gem: gem)
         drag.zPosition = 100
         addChild(drag)
         dragNode = drag
@@ -460,7 +466,7 @@ final class AdventureGameScene: SKScene {
                                 y: location.y - grabOffset.y)
 
         if ghostEnabled {
-            let ghost = BlockNode(shape: item.shape, color: item.color, cellSize: cellSize)
+            let ghost = BlockNode(shape: item.shape, color: item.color, cellSize: cellSize, gem: gem)
             ghost.zPosition = 50
             ghost.alpha     = 0.0
             addChild(ghost)
@@ -616,7 +622,17 @@ final class AdventureGameScene: SKScene {
             // Remove old node if present
             placedNodes[row][col]?.removeFromParent()
 
-            let node = makePlacedCellNode(color: color, isTarget: false)
+            // Detect if this cell should have a gem (from the piece we just dropped)
+            let cellState = engine.grid.cellStates[row][col]
+            let isTarget = cellState.gem != nil
+            
+            let node = makePlacedCellNode(color: color, isTarget: isTarget)
+            if isTarget, let gem = cellState.gem {
+                 // Add the pulsing neon gem icon to the grid cell
+                 let icon = makeTargetGemIcon(gem: gem)
+                 node.addChild(icon)
+            }
+            
             node.position = positionForCell(row: row, col: col)
             node.setScale(0.25)
             placedLayer.addChild(node)

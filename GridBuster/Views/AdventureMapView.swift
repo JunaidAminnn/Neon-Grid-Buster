@@ -157,7 +157,7 @@ struct AdventureMapView: View {
                 .tracking(6)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 58)
+        .padding(.top, 38)
     }
 
     // MARK: - Trophy Section

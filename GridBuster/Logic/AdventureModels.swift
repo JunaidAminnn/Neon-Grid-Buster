@@ -45,10 +45,10 @@ enum TargetGem: String, CaseIterable, Codable, Hashable {
     /// Associated neon colour used to tint the gem's grid cell.
     var neonColor: NeonColor {
         switch self {
-        case .emerald:        return .cyan
-        case .star:           return .purple
+        case .emerald:        return .lime
+        case .star:           return .yellow
         case .orangePentagon: return .orange
-        case .blueSapphire:   return .cyan
+        case .blueSapphire:   return .blue
         case .redRuby:        return .red
         }
     }
