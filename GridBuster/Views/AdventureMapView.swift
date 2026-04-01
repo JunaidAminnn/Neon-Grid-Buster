@@ -2,45 +2,21 @@
 //  AdventureMapView.swift
 //  NeonGridBuster
 //
-//  Prompt 5.1 — Adventure Map (clone of image_3.png structure).
-//  • Deep neon gradient background
-//  • Grid-square pixel-art neon magenta tiger head (silhouette of grid squares)
-//  • Glowing green "LEVEL 1" button → loads GameView with preset puzzle
-//  • Back arrow → returns to Main Menu
+//  Prompt 3 — Adventure Map & Level Progression
+//  ─────────────────────────────────────────────────────────────────────────
+//  Visual map / level-select screen.
+//
+//  Layout (top → bottom):
+//    Dark blue-to-purple gradient background
+//    ← MENU  (back)          ADVENTURE (label)
+//    Trophy icon
+//    "Keep Winning!" / "Take part in the Adventure" headline
+//    Tiger Head pixel grid — squares fill neon magenta from bottom as
+//      levels are completed (progress-driven fill animation)
+//    "LEVEL  X" glowing green button → AdventureGameView
 //
 
 import SwiftUI
-
-// MARK: - Level Definitions
-
-enum AdventureLevel: Int, CaseIterable {
-    case level1 = 1
-
-    var title: String { "LEVEL \(rawValue)" }
-
-    /// Pre-filled grid: 8×8 of optional NeonColor (nil = empty cell).
-    /// Level 1 — "Neon Claw": two diagonal claw-slash patterns the player
-    /// must fill and complete to clear lines.
-    var preset: [[NeonColor?]] {
-        var g: [[NeonColor?]] = Array(
-            repeating: Array(repeating: nil, count: 8),
-            count: 8
-        )
-        switch self {
-        case .level1:
-            // Left claw — cyan diagonal from top-left
-            let cyanCells = [(0,0),(1,1),(2,2),(3,3),(4,3),(5,2),(6,1),(7,0)]
-            for (r,c) in cyanCells { g[r][c] = .cyan }
-            // Right claw — pink diagonal from top-right
-            let pinkCells = [(0,7),(1,6),(2,5),(3,4),(4,4),(5,5),(6,6),(7,7)]
-            for (r,c) in pinkCells { g[r][c] = .pink }
-            // Spine — purple vertical centre-left fill
-            for r in 0..<4 { g[r][1] = .purple }
-            for r in 0..<4 { g[r][6] = .purple }
-        }
-        return g
-    }
-}
 
 // MARK: - AdventureMapView
 
@@ -48,24 +24,28 @@ struct AdventureMapView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // Pixel-art tiger head: 1 = filled magenta, 0 = empty (11 × 11 grid)
-    private let tigerPixels: [[Int]] = [
-        [0,0,1,0,0,0,0,0,1,0,0],  // ear tips
-        [0,1,1,1,0,0,0,1,1,1,0],  // ears
-        [0,1,1,1,1,1,1,1,1,1,0],  // crown
-        [1,1,1,1,1,1,1,1,1,1,1],  // forehead
-        [1,1,0,0,1,1,1,0,0,1,1],  // eye sockets
-        [1,1,1,1,1,1,1,1,1,1,1],  // nose bridge
-        [1,1,1,0,1,1,1,0,1,1,1],  // nostrils
-        [1,1,1,1,1,1,1,1,1,1,1],  // muzzle
-        [0,1,0,1,1,0,1,1,0,1,0],  // whisker dots / stripes
-        [0,0,1,1,1,1,1,1,1,0,0],  // lower chin
-        [0,0,0,0,1,1,1,0,0,0,0],  // jaw / neck
-    ]
+    // ── Progress ──────────────────────────────────────────────────────────
+    @StateObject private var progress = AdventureProgressManager.shared
 
-    @State private var glowPulse     = false
-    @State private var buttonPressed = false
+    // ── Navigation ────────────────────────────────────────────────────────
     @State private var navigateToGame = false
+
+    // ── Animation ────────────────────────────────────────────────────────
+    /// Animated lit-pixel count — drives the fill animation separately
+    /// from the raw `progress.litPixelCount` so we can sequence it.
+    @State private var animatedLitCount: Int = 0
+    @State private var glowPulse        = false
+    @State private var buttonPressed    = false
+    @State private var trophyScale: CGFloat = 0.80
+
+    // ── Tiger pixel map (11 × 11) — must match AdventureProgressManager ──
+    private let tigerPixels = AdventureProgressManager.tigerPixels
+
+    // ── Layout ────────────────────────────────────────────────────────────
+    private let cellSize:  CGFloat = 19
+    private let cellGap:   CGFloat = 3
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -74,17 +54,33 @@ struct AdventureMapView: View {
 
                 VStack(spacing: 0) {
                     topBar
-                    Spacer()
-                    tigerArtSection
-                    Spacer(minLength: 24)
+                    Spacer(minLength: 10)
+                    trophySection
+                    Spacer(minLength: 14)
+                    tigerGridSection
+                    Spacer(minLength: 20)
                     levelButton
-                    Spacer(minLength: 40)
+                    Spacer(minLength: 44)
                 }
             }
             .navigationBarHidden(true)
-            .onAppear { withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { glowPulse = true } }
+            // ── On appear: snap animatedLitCount to current (no animation) ──
+            .onAppear {
+                animatedLitCount = progress.litPixelCount
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                    glowPulse = true
+                }
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.60)) {
+                    trophyScale = 1.0
+                }
+            }
+            // ── When progress changes (level cleared and back to map) ──────
+            .onChange(of: progress.litPixelCount) { _, newCount in
+                animateFill(to: newCount)
+            }
+            // ── Navigate to gameplay ──────────────────────────────────────
             .navigationDestination(isPresented: $navigateToGame) {
-                GameView(mode: .adventure, adventurePreset: AdventureLevel.level1.preset)
+                AdventureGameView(levelID: progress.nextLevelID)
             }
         }
     }
@@ -95,20 +91,19 @@ struct AdventureMapView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0x0D/255, green: 0x01/255, blue: 0x2B/255),
-                    Color(red: 0x06/255, green: 0x00/255, blue: 0x14/255),
-                    Color(red: 0x00/255, green: 0x01/255, blue: 0x05/255),
+                    Color(red: 0.06, green: 0.02, blue: 0.16),
+                    Color(red: 0.04, green: 0.01, blue: 0.10),
+                    Color(red: 0.02, green: 0.01, blue: 0.05),
                 ],
                 startPoint: .top,
-                endPoint: .bottom
+                endPoint:   .bottom
             )
-
-            // Magenta ambient bloom behind tiger
+            // Ambient magenta bloom
             RadialGradient(
-                colors: [Color(red: 1, green: 0, blue: 1).opacity(0.18), .clear],
+                colors: [Color(red: 1, green: 0, blue: 1).opacity(0.16), .clear],
                 center: .center,
                 startRadius: 0,
-                endRadius: 260
+                endRadius: 300
             )
             .blendMode(.screen)
         }
@@ -124,83 +119,234 @@ struct AdventureMapView: View {
                     Image(systemName: "arrow.left")
                         .font(.system(size: 14, weight: .black))
                     Text("MENU")
-                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .font(.system(size: 12, weight: .black, design: .rounded))
                         .tracking(3)
                 }
                 .foregroundStyle(Color(red: 0, green: 1, blue: 1))
-                .padding(.vertical, 10)
+                .padding(.vertical, 9)
                 .padding(.horizontal, 14)
-                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+                .background(Color.white.opacity(0.06),
+                            in: RoundedRectangle(cornerRadius: 14))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.35), lineWidth: 1)
                 )
-                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.25), radius: 8)
+                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.22), radius: 8)
             }
 
             Spacer()
 
             Text("ADVENTURE")
-                .font(.system(size: 14, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.30))
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.28))
                 .tracking(5)
         }
         .padding(.horizontal, 20)
         .padding(.top, 58)
     }
 
-    // MARK: - Tiger Pixel Art
+    // MARK: - Trophy Section
 
-    private var tigerArtSection: some View {
-        VStack(spacing: 16) {
-            // Section label
-            Text("TIGER MODE")
-                .font(.system(size: 11, weight: .black, design: .rounded))
-                .foregroundStyle(Color(red: 1, green: 0, blue: 1).opacity(0.70))
-                .tracking(6)
-
-            // Pixel tiger
+    private var trophySection: some View {
+        VStack(spacing: 12) {
+            // ── Trophy icon ───────────────────────────────────────────────
             ZStack {
-                // Ambient glow behind the tiger
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(red: 1, green: 0, blue: 1).opacity(glowPulse ? 0.14 : 0.08))
-                    .frame(width: 220, height: 220)
-                    .blur(radius: 30)
-
-                // Grid-background panel
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.03))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color(red: 1, green: 0, blue: 1).opacity(0.22), lineWidth: 1)
+                // Glow bloom
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.30 : 0.14),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 60
+                        )
                     )
-                    .frame(width: 210, height: 210)
+                    .frame(width: 90, height: 90)
 
-                TigerPixelView(pixels: tigerPixels, cellSize: 17)
+                Image(systemName: progress.anyCompleted ? "trophy.fill" : "trophy")
+                    .font(.system(size: progress.anyCompleted ? 48 : 44, weight: .black))
+                    .foregroundStyle(
+                        progress.anyCompleted
+                        ? LinearGradient(
+                            colors: [Color(red: 1, green: 0.95, blue: 0.2),
+                                     Color(red: 1, green: 0.65, blue: 0)],
+                            startPoint: .top, endPoint: .bottom
+                          )
+                        : LinearGradient(
+                            colors: [.white.opacity(0.50), .white.opacity(0.22)],
+                            startPoint: .top, endPoint: .bottom
+                          )
+                    )
+                    .shadow(
+                        color: progress.anyCompleted
+                            ? Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.80 : 0.40)
+                            : Color.white.opacity(0.10),
+                        radius: progress.anyCompleted ? 18 : 4
+                    )
             }
+            .scaleEffect(trophyScale)
 
-            // Subtitle
-            Text("LEVEL SELECT")
-                .font(.system(size: 10, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.20))
-                .tracking(6)
+            // ── Headline ──────────────────────────────────────────────────
+            if progress.anyCompleted {
+                keepWinningLabel
+            } else {
+                joinAdventureLabel
+            }
         }
+    }
+
+    private var keepWinningLabel: some View {
+        HStack(spacing: 0) {
+            // "Keep " in cyan
+            Text("Keep ")
+                .font(.system(size: 26, weight: .black, design: .rounded))
+                .foregroundStyle(Color(red: 0, green: 1, blue: 1))
+                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.60), radius: 10)
+
+            // "Winning!" in neon pink
+            Text("Winning!")
+                .font(.system(size: 26, weight: .black, design: .rounded))
+                .foregroundStyle(Color(red: 1, green: 0.30, blue: 0.85))
+                .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.70), radius: 10)
+        }
+    }
+
+    private var joinAdventureLabel: some View {
+        VStack(spacing: 6) {
+            Text("Take part in the Adventure")
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.70))
+                .multilineTextAlignment(.center)
+            Text("and win the trophy.")
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.42))
+        }
+    }
+
+    // MARK: - Tiger Grid Section
+
+    private var tigerGridSection: some View {
+        VStack(spacing: 0) {
+            // Ambient glow behind the tiger
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color(red: 1, green: 0, blue: 1).opacity(glowPulse ? 0.12 : 0.06))
+                    .frame(
+                        width: CGFloat(11) * (cellSize + cellGap) + 40,
+                        height: CGFloat(11) * (cellSize + cellGap) + 40
+                    )
+                    .blur(radius: 26)
+
+                // Grid panel
+                RoundedRectangle(cornerRadius: 22)
+                    .fill(Color.white.opacity(0.025))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22)
+                            .stroke(Color(red: 1, green: 0, blue: 1).opacity(0.18), lineWidth: 1)
+                    )
+                    .frame(
+                        width:  CGFloat(11) * (cellSize + cellGap) + 28,
+                        height: CGFloat(11) * (cellSize + cellGap) + 28
+                    )
+
+                // Tiger grid
+                tigerGrid
+            }
+        }
+    }
+
+    private var tigerGrid: some View {
+        VStack(spacing: cellGap) {
+            ForEach(0..<tigerPixels.count, id: \.self) { row in
+                HStack(spacing: cellGap) {
+                    ForEach(0..<tigerPixels[row].count, id: \.self) { col in
+                        if tigerPixels[row][col] == 1 {
+                            tigerCell(row: row, col: col)
+                        } else {
+                            Color.clear
+                                .frame(width: cellSize, height: cellSize)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Single cell inside the tiger silhouette — either dim (unlit) or glowing magenta (lit).
+    private func tigerCell(row: Int, col: Int) -> some View {
+        let isLit = isPixelLit(row: row, col: col)
+
+        return ZStack {
+            if isLit {
+                // ── Lit: glowing magenta ──────────────────────────────────
+                RoundedRectangle(cornerRadius: cellSize * 0.22)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 1.0, green: 0.50, blue: 1.0),
+                                Color(red: 1.0, green: 0.00, blue: 1.0),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint:   .bottomTrailing
+                        )
+                    )
+                    .frame(width: cellSize, height: cellSize)
+                    .shadow(
+                        color: Color(red: 1, green: 0, blue: 1).opacity(glowPulse ? 0.85 : 0.55),
+                        radius: glowPulse ? 7 : 4
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cellSize * 0.22)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.35), Color.clear],
+                                    startPoint: .topLeading, endPoint: .center
+                                )
+                            )
+                    )
+            } else {
+                // ── Dim: unfilled silhouette cell ─────────────────────────
+                RoundedRectangle(cornerRadius: cellSize * 0.22)
+                    .fill(Color(red: 0.10, green: 0.12, blue: 0.28))
+                    .frame(width: cellSize, height: cellSize)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cellSize * 0.22)
+                            .stroke(Color(red: 0.35, green: 0.38, blue: 0.65).opacity(0.60),
+                                    lineWidth: 1.0)
+                    )
+            }
+        }
+        .animation(.spring(response: 0.36, dampingFraction: 0.62), value: isLit)
+    }
+
+    /// Returns true when this tiger pixel should currently be rendered as lit,
+    /// based on the animated counter (not the raw progress value directly).
+    private func isPixelLit(row: Int, col: Int) -> Bool {
+        guard let idx = AdventureProgressManager.tigerPositionsSorted.firstIndex(
+            where: { $0.row == row && $0.col == col }
+        ) else { return false }
+        return idx < animatedLitCount
     }
 
     // MARK: - Level Button
 
     private var levelButton: some View {
         Button {
-            withAnimation(.spring(response: 0.18, dampingFraction: 0.65)) { buttonPressed = true }
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.65)) {
+                buttonPressed = true
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
                 withAnimation { buttonPressed = false }
                 navigateToGame = true
             }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 Image(systemName: "play.fill")
                     .font(.system(size: 18, weight: .black))
-                Text("LEVEL  1")
+                Text(levelButtonTitle)
                     .font(.system(size: 22, weight: .black, design: .rounded))
                     .tracking(4)
             }
@@ -214,16 +360,15 @@ struct AdventureMapView: View {
                         Color(red: 0.00, green: 0.75, blue: 0.20),
                     ],
                     startPoint: .top,
-                    endPoint: .bottom
+                    endPoint:   .bottom
                 ),
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay(
-                // Bevel highlight on top half
+                // Bevel highlight
                 LinearGradient(
                     colors: [Color.white.opacity(0.26), Color.clear],
-                    startPoint: .top,
-                    endPoint: .center
+                    startPoint: .top, endPoint: .center
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             )
@@ -231,48 +376,36 @@ struct AdventureMapView: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(Color(red: 0, green: 1, blue: 0.4).opacity(0.80), lineWidth: 1.5)
             )
-            // Multi-layer neon green glow
-            .shadow(color: Color(red: 0, green: 1, blue: 0).opacity(glowPulse ? 0.70 : 0.40), radius: glowPulse ? 22 : 14, x: 0, y: 6)
+            .shadow(color: Color(red: 0, green: 1, blue: 0).opacity(glowPulse ? 0.72 : 0.42),
+                    radius: glowPulse ? 22 : 14, x: 0, y: 6)
             .shadow(color: Color(red: 0, green: 1, blue: 0).opacity(0.25), radius: 40, x: 0, y: 12)
             .scaleEffect(buttonPressed ? 0.96 : 1.0)
         }
         .padding(.horizontal, 30)
     }
-}
 
-// MARK: - TigerPixelView
+    private var levelButtonTitle: String {
+        if progress.allLevelsComplete {
+            return "LEVEL  \(AdventureRegistry.all.last?.id ?? 1)"
+        }
+        return "LEVEL  \(progress.nextLevelID)"
+    }
 
-/// Renders the pixel-art tiger head as a grid of neon magenta squares.
-private struct TigerPixelView: View {
-    let pixels:   [[Int]]
-    let cellSize: CGFloat
+    // MARK: - Fill Animation
 
-    var body: some View {
-        VStack(spacing: 2) {
-            ForEach(0..<pixels.count, id: \.self) { row in
-                HStack(spacing: 2) {
-                    ForEach(0..<pixels[row].count, id: \.self) { col in
-                        if pixels[row][col] == 1 {
-                            RoundedRectangle(cornerRadius: cellSize * 0.18)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 1.0, green: 0.55, blue: 1.0),  // top-left highlight
-                                            Color(red: 1.0, green: 0.00, blue: 1.0),  // #FF00FF magenta
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: cellSize, height: cellSize)
-                                .shadow(
-                                    color: Color(red: 1, green: 0, blue: 1).opacity(0.60),
-                                    radius: 5
-                                )
-                        } else {
-                            Color.clear.frame(width: cellSize, height: cellSize)
-                        }
-                    }
+    /// Cascades `animatedLitCount` up to `newCount` one pixel at a time,
+    /// with a tiny stagger so the squares pop in sequentially (bottom → top).
+    private func animateFill(to newCount: Int) {
+        let current = animatedLitCount
+        guard newCount > current else {
+            animatedLitCount = newCount   // immediate reset (if progress was cleared)
+            return
+        }
+        for step in current..<newCount {
+            let delay = Double(step - current) * 0.035
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.60)) {
+                    animatedLitCount = step + 1
                 }
             }
         }

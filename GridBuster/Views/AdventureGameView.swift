@@ -98,6 +98,14 @@ struct AdventureGameView: View {
         .onChange(of: ghostEnabled) { _, v in
             scene?.updateSettings(hapticsEnabled: hapticsEnabled, ghostEnabled: v)
         }
+        // Mark level complete in progress manager the moment the win fires.
+        // This ensures AdventureMapView's tiger fill is updated whether the
+        // player taps Next Level, Play Again, or Main Menu.
+        .onChange(of: engine.isLevelWon) { _, won in
+            if won {
+                AdventureProgressManager.shared.markComplete(levelID: engine.currentLevel.id)
+            }
+        }
         // Animate gem count bumps on change
         .onChange(of: engine.remainingTargets) { _, newTargets in
             for gem in TargetGem.allCases {
@@ -215,13 +223,13 @@ struct AdventureGameView: View {
     }
 
     private func loadNextLevel() {
+        // isLevelWon onChange already called markComplete; no need to repeat.
         let nextID = engine.currentLevel.id + 1
         if AdventureRegistry.level(for: nextID) != nil {
-            // Re-init engine for next level
             engine.loadLevel(id: nextID)
             scene?.restartLevel()
         } else {
-            // No next level – return to menu
+            // All levels done — return to map so the player sees the full tiger.
             dismiss()
         }
     }
