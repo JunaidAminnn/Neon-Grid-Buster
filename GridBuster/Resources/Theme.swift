@@ -32,7 +32,7 @@ enum Theme {
         static let goldLight = Color(red: 0xFF / 255, green: 0xE5 / 255, blue: 0x7A / 255)
         static let goldDeep = Color(red: 0xFF / 255, green: 0xB7 / 255, blue: 0x1A / 255)
 
-        static let panelBackground = Color(hex: "240021")
+        static let panelBackground = Color(hex: "050A14")
         static let textPrimary = Color.white.opacity(0.95)
         static let textSecondary = Color.white.opacity(0.70)
     }

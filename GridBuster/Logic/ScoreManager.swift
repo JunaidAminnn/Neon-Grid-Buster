@@ -81,7 +81,9 @@ final class ScoreManager: ObservableObject {
 
         // ── 1. Update combo FIRST so the multiplier is correct this turn ─
         if totalLinesCleared > 0 {
-            combo           = (lastMoveCleared || comboGraceMoves > 0) ? combo + 1 : 1
+            // If combo > 0, it means it hasn't been reset by missing too many moves.
+            // On the 3rd turn after a clear (graceMoves 2 -> 1 -> 0), combo is still > 0.
+            combo           = (combo > 0) ? combo + 1 : 1
             lastMoveCleared = true
             comboGraceMoves = 2   // Reset grace period on any clear
         } else {

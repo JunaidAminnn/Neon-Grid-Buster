@@ -151,26 +151,32 @@ struct MoreSettingsView: View {
 
     private var appIdentityBlock: some View {
         VStack(spacing: 12) {
-            // App "logo"
-            ZStack {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(
+            // App icon
+            Group {
+                if let appIcon = fetchAppIcon() {
+                    Image(uiImage: appIcon)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    Image(systemName: "app.dashed")
+                        .font(.system(size: 30, weight: .black))
+                        .foregroundStyle(.white)
+                }
+            }
+            .frame(width: 72, height: 72)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
                         LinearGradient(
                             colors: [Color(red: 1, green: 0, blue: 1), Color(red: 0, green: 1, blue: 1)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2.5
                     )
-                    .frame(width: 72, height: 72)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                    )
-                    .shadow(color: Color(red: 1, green: 0, blue: 1).opacity(0.5), radius: 12)
-
-                Image(systemName: "grid.reveal")
-                    .font(.system(size: 32, weight: .black))
-                    .foregroundStyle(.white)
-            }
+            )
+            .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.45), radius: 14, x: 0, y: 0)
 
             VStack(spacing: 4) {
                 Text("NEON GRID BUSTER")
@@ -192,13 +198,13 @@ struct MoreSettingsView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 // Share App
-                utilityButton(title: "Share App", icon: "square.and.arrow.up.fill", color: .cyan) {
+                utilityButton(title: "Share App", icon: "square.and.arrow.up.fill", color: Theme.Palette.neonYellow) {
                     shareApp()
                 }
                 
-                // Found a Bug
-                utilityButton(title: "Found a Bug", icon: "ant.fill", color: .pink) {
-                    contactSupport()
+                // Rate Us
+                utilityButton(title: "Rate Us", icon: "star.fill", color: Theme.Palette.neonLime) {
+                    rateApp()
                 }
             }
         }
@@ -218,9 +224,9 @@ struct MoreSettingsView: View {
             .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(color.opacity(0.4), lineWidth: 2)
+                    .stroke(color.opacity(0.8), lineWidth: 2.2)
             )
-            .shadow(color: color.opacity(0.2), radius: 8)
+            .shadow(color: color.opacity(0.35), radius: 10)
         }
     }
 
@@ -274,14 +280,30 @@ struct MoreSettingsView: View {
             rootVC.present(av, animated: true)
         }
     }
-    
-    private func contactSupport() {
-        let email = "aniqasafdar6@gmail.com"
-        let subject = "Neon Grid Buster Bug Report"
-        let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        if let url = URL(string: mailto) {
-            UIApplication.shared.open(url)
+
+    private func rateApp() {
+        // Placeholder App Store ID (replace with your real one)
+        let appId = "0000000000"
+
+        if let url = URL(string: "itms-apps://itunes.apple.com/app/id\(appId)?action=write-review") {
+            openURL(url)
+            return
         }
+
+        if let url = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review") {
+            openURL(url)
+        }
+    }
+
+    private func fetchAppIcon() -> UIImage? {
+        if let icon = UIImage(named: "AppIcon") { return icon }
+        if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
+           let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+           let files = primary["CFBundleIconFiles"] as? [String],
+           let name = files.last {
+            return UIImage(named: name)
+        }
+        return nil
     }
 
     // MARK: - Ad Banner Placeholder

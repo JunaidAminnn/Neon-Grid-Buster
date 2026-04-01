@@ -100,7 +100,7 @@ struct SettingsView: View {
                         SettingsActionRow(
                             icon:        "gamecontroller.fill",
                             title:       "More Games",
-                            buttonTitle: "Start",
+                            buttonTitle: "Open",
                             buttonColor: .green
                         ) {
                             // Phase N: deep-link to game store / more games
@@ -123,7 +123,7 @@ struct SettingsView: View {
                             icon:        "square.and.arrow.up.fill",
                             title:       "Share App",
                             buttonTitle: "Send",
-                            buttonColor: .blue
+                            buttonColor: .yellow
                         ) {
                             shareApp()
                         }
@@ -141,7 +141,7 @@ struct SettingsView: View {
                             icon:        "star.fill",
                             title:       "Rate Us",
                             buttonTitle: "Rate",
-                            buttonColor: .blue
+                            buttonColor: .green
                         ) {
                             rateApp()
                         }
@@ -230,7 +230,7 @@ struct SettingsView: View {
         HStack {
             Text(text)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(Color(red: 0, green: 1, blue: 1).opacity(0.55))
+                .foregroundStyle(.white.opacity(0.35))
                 .tracking(4)
             Spacer()
         }
@@ -301,18 +301,8 @@ private struct SettingsToggleRow: View {
 
             Spacer(minLength: 0)
 
-            // High-visibility neon-tinted toggle
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-                .tint(Color(red: 0, green: 1, blue: 1))
-                // Glow effect when ON
-                .shadow(
-                    color: isOn
-                        ? Color(red: 0, green: 1, blue: 1).opacity(0.60)
-                        : .clear,
-                    radius: 8
-                )
-                .animation(.easeInOut(duration: 0.2), value: isOn)
+            // High-visibility neon toggle (ON: white, OFF: black)
+            SettingsNeonSwitch(isOn: $isOn)
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
@@ -344,7 +334,7 @@ private struct SettingsActionRow: View {
     let action:      () -> Void
 
     enum ActionButtonColor {
-        case green, blue
+        case green, blue, yellow
 
         var gradient: [Color] {
             switch self {
@@ -352,6 +342,8 @@ private struct SettingsActionRow: View {
                 return [Color(red: 0.20, green: 0.85, blue: 0.28), Color(red: 0.10, green: 0.60, blue: 0.17)]
             case .blue:
                 return [Color(red: 0.16, green: 0.48, blue: 0.96), Color(red: 0.10, green: 0.32, blue: 0.75)]
+            case .yellow:
+                return [Theme.Palette.neonYellow, Theme.Palette.neonYellow.opacity(0.7)]
             }
         }
 
@@ -359,6 +351,7 @@ private struct SettingsActionRow: View {
             switch self {
             case .green: return Color(red: 0.10, green: 0.90, blue: 0.28)
             case .blue:  return Color(red: 0.16, green: 0.55, blue: 1.00)
+            case .yellow: return Theme.Palette.neonYellow
             }
         }
     }
@@ -399,28 +392,14 @@ private struct SettingsActionRow: View {
                     .frame(width: 64)
                     .padding(.vertical, 9)
                     .background(
-                        LinearGradient(
-                            colors: buttonColor.gradient,
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(buttonColor.glow.opacity(0.18))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.22), .clear],
-                                    startPoint: .top, endPoint: .center
-                                )
-                            )
-                            .blendMode(.softLight)
+                            .stroke(buttonColor.glow.opacity(0.85), lineWidth: 2.2)
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.white.opacity(0.16), lineWidth: 1)
-                    )
-                    .shadow(color: buttonColor.glow.opacity(0.45), radius: 10, x: 0, y: 4)
+                    .shadow(color: buttonColor.glow.opacity(0.50), radius: 10, x: 0, y: 4)
                     .scaleEffect(isPressed ? 0.94 : 1.0)
                     .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isPressed)
             }
@@ -436,6 +415,69 @@ private struct SettingsActionRow: View {
                         .stroke(Color.white.opacity(0.06), lineWidth: 1)
                 )
         )
+    }
+}
+
+// MARK: - SettingsNeonSwitch
+
+private struct SettingsNeonSwitch: View {
+    @Binding var isOn: Bool
+
+    @State private var isPressed = false
+
+    private var trackFill: Color {
+        isOn ? Color.white.opacity(0.92) : Color.black.opacity(0.70)
+    }
+
+    private var trackStroke: Color {
+        isOn ? Color(red: 0, green: 1, blue: 1).opacity(0.85) : Color.white.opacity(0.20)
+    }
+
+    private var thumbFill: Color {
+        isOn ? .white : .black
+    }
+
+    private var thumbStroke: Color {
+        isOn ? Color.black.opacity(0.22) : Color.white.opacity(0.55)
+    }
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.20, dampingFraction: 0.78)) {
+                isOn.toggle()
+            }
+        } label: {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                Capsule(style: .continuous)
+                    .fill(trackFill)
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(trackStroke, lineWidth: 2)
+                    )
+                    .shadow(
+                        color: isOn ? Color(red: 0, green: 1, blue: 1).opacity(0.35) : .clear,
+                        radius: 10,
+                        x: 0,
+                        y: 0
+                    )
+
+                Circle()
+                    .fill(thumbFill)
+                    .overlay(Circle().stroke(thumbStroke, lineWidth: 1.4))
+                    .shadow(color: Color.black.opacity(0.25), radius: 3, x: 0, y: 2)
+                    .frame(width: 24, height: 24)
+                    .padding(.horizontal, 3)
+            }
+            .frame(width: 52, height: 30)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .animation(.spring(response: 0.20, dampingFraction: 0.75), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+        .accessibilityLabel("Toggle")
+        .accessibilityValue(isOn ? "On" : "Off")
     }
 }
 

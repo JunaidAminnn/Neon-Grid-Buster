@@ -88,7 +88,7 @@ struct MainMenuView: View {
                                     glowColor:   Color(red: 1.0, green: 0.07, blue: 0.94),
                                     isPressed:   moreGamesPress
                                 )
-                            }
+                        }
                             .buttonStyle(ScaleButtonStyle(isPressed: $moreGamesPress))
                         }
                         .padding(.horizontal, 24)
