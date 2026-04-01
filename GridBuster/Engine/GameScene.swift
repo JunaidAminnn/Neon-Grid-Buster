@@ -43,6 +43,9 @@ final class GameScene: SKScene {
     private var currentOrigin: GridPoint?
     private var currentValid: Bool = false
 
+    /// Vertical distance the dragged block is shifted above the user's finger (for visibility)
+    private let dragVerticalOffset: CGFloat = 100
+
     private let lightImpact = UIImpactFeedbackGenerator(style: .light)
     private let heavyImpact = UIImpactFeedbackGenerator(style: .heavy)
 
@@ -499,7 +502,7 @@ final class GameScene: SKScene {
             y: (CGFloat(grabbedCell.y) + 0.5) * cellSize
         )
 
-        drag.position = CGPoint(x: location.x - grabOffset.x, y: location.y - grabOffset.y)
+        drag.position = CGPoint(x: location.x - grabOffset.x, y: location.y - grabOffset.y + dragVerticalOffset)
 
         if ghostEnabled {
             let ghost = BlockNode(shape: node.shape, color: node.color, cellSize: cellSize)
@@ -518,7 +521,7 @@ final class GameScene: SKScene {
         lastTouchLocation = location
         guard let dragNode else { return }
 
-        dragNode.position = CGPoint(x: location.x - grabOffset.x, y: location.y - grabOffset.y)
+        dragNode.position = CGPoint(x: location.x - grabOffset.x, y: location.y - grabOffset.y + dragVerticalOffset)
         updateGhost(for: location)
     }
 
@@ -668,7 +671,7 @@ final class GameScene: SKScene {
         }
 
         let col = Int(floor((touchLocation.x - gridOrigin.x) / cellSize))
-        let row = Int(floor((touchLocation.y - gridOrigin.y) / cellSize))
+        let row = Int(floor((touchLocation.y + dragVerticalOffset - gridOrigin.y) / cellSize))
         let origin = GridPoint(row: row - grabbedCell.y, col: col - grabbedCell.x)
 
         let valid = grid.canPlace(shape: item.shape, at: origin)

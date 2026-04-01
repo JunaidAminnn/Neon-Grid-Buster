@@ -55,6 +55,9 @@ final class AdventureGameScene: SKScene {
     private var currentValid:  Bool = false
     private var lastTouchLocation: CGPoint = .zero
 
+    /// Vertical distance the dragged block is shifted above the user's finger (for visibility)
+    private let dragVerticalOffset: CGFloat = 100
+
     // ── Camera ───────────────────────────────────────────────────────────────
     private let gameCamera = SKCameraNode()
 
@@ -463,7 +466,7 @@ final class AdventureGameScene: SKScene {
             y: (CGFloat(grabbedCell.y) + 0.5) * cellSize
         )
         drag.position = CGPoint(x: location.x - grabOffset.x,
-                                y: location.y - grabOffset.y)
+                                y: location.y - grabOffset.y + dragVerticalOffset)
 
         if ghostEnabled {
             let ghost = BlockNode(shape: item.shape, color: item.color, cellSize: cellSize, gem: gem)
@@ -482,7 +485,7 @@ final class AdventureGameScene: SKScene {
         lastTouchLocation = location
         guard let dragNode else { return }
         dragNode.position = CGPoint(x: location.x - grabOffset.x,
-                                    y: location.y - grabOffset.y)
+                                    y: location.y - grabOffset.y + dragVerticalOffset)
         updateGhost(for: location)
     }
 
@@ -725,7 +728,7 @@ final class AdventureGameScene: SKScene {
         }
 
         let col    = Int(floor((touchLocation.x - gridOrigin.x) / cellSize))
-        let row    = Int(floor((touchLocation.y - gridOrigin.y) / cellSize))
+        let row    = Int(floor((touchLocation.y + dragVerticalOffset - gridOrigin.y) / cellSize))
         let origin = GridPoint(row: row - grabbedCell.y, col: col - grabbedCell.x)
         let valid  = engine.grid.canPlace(shape: item.shape, at: origin)
         currentOrigin = origin
