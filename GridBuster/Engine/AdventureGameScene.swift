@@ -56,7 +56,7 @@ final class AdventureGameScene: SKScene {
     private var lastTouchLocation: CGPoint = .zero
 
     /// Vertical distance the dragged block is shifted above the user's finger (for visibility)
-    private let dragVerticalOffset: CGFloat = 100
+    private let dragVerticalOffset: CGFloat = 120
 
     // ── Camera ───────────────────────────────────────────────────────────────
     private let gameCamera = SKCameraNode()
@@ -723,12 +723,17 @@ final class AdventureGameScene: SKScene {
         guard let index = activeIndex, let item = engine.trayData[index] else {
             ghostNode.alpha = 0; return
         }
-        guard gridRect.contains(touchLocation) else {
-            ghostNode.alpha = 0; currentOrigin = nil; currentValid = false; return
+        let offsetLocation = CGPoint(x: touchLocation.x, y: touchLocation.y + dragVerticalOffset)
+
+        guard gridRect.contains(offsetLocation) else {
+            ghostNode.alpha = 0
+            currentOrigin = nil
+            currentValid  = false
+            return
         }
 
-        let col    = Int(floor((touchLocation.x - gridOrigin.x) / cellSize))
-        let row    = Int(floor((touchLocation.y + dragVerticalOffset - gridOrigin.y) / cellSize))
+        let col    = Int(floor((offsetLocation.x - gridOrigin.x) / cellSize))
+        let row    = Int(floor((offsetLocation.y - gridOrigin.y) / cellSize))
         let origin = GridPoint(row: row - grabbedCell.y, col: col - grabbedCell.x)
         let valid  = engine.grid.canPlace(shape: item.shape, at: origin)
         currentOrigin = origin
