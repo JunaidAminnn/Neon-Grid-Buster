@@ -19,6 +19,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 // MARK: - AdventureGameEngine
 
@@ -128,6 +129,23 @@ final class AdventureGameEngine: ObservableObject {
         if trayData.allSatisfy({ $0 == nil }) {
             refillTray()
         }
+    }
+
+    /// Resumes the current adventure session after a rewarded ad.
+    func continueAfterAd() {
+        isGameOver = false
+        refillEasyTray()
+    }
+
+    private func refillEasyTray() {
+        let shapes = generator.generateEasyTray()
+        // Adventure colorisation + gem injection
+        trayData = shapes.map { (shape: $0, color: .cyan) } // Placeholder color, will be updated by refill logic or specifically set
+        // Re-run colorisation to match normal refill
+        let colored = shapes.map { (shape: $0, color: NeonColor.allCases.randomElement() ?? .cyan) }
+        trayData = colored
+        trayGems = (0..<3).map { i in injectGem(forSlot: i) }
+        checkGameOverIfNeeded()
     }
 
     // MARK: - Gem Injection

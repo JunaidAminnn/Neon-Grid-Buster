@@ -12,6 +12,8 @@
 //
 
 import Foundation
+import SwiftUI
+import Combine
 
 // MARK: - TargetGem
 

@@ -177,6 +177,30 @@ final class GameScene: SKScene {
         }
     }
 
+    /// Resumes the current session after a rewarded ad by clearing Game Over and giving easy blocks.
+    func continueAfterAd() {
+        scoreManager.isGameOver = false
+        refillEasyTray()
+        saveCurrentState()
+    }
+
+    private func refillEasyTray() {
+        let shapes = generator.generateEasyTray()
+        // Use active palette colours
+        let trayItems = shapes.map { (shape: $0, color: nextPaletteColor()) }
+        let commonCellSize = trayCellSize(for: trayItems.map(\.shape))
+        for i in 0..<3 {
+            let item = trayItems[i]
+            trayData[i] = item
+            let node = BlockNode(shape: item.shape, color: item.color, cellSize: commonCellSize)
+            tray[i]?.removeFromParent()
+            tray[i] = node
+            trayLayer.addChild(node)
+        }
+        layoutTray()
+        checkGameOverIfNeeded()
+    }
+
     // MARK: - Starting Blocks (Classic Mode)
 
     /// Spawns a randomized alphabet letter (A, B, C, D) out of grid blocks as the starting puzzle.
@@ -752,7 +776,7 @@ final class GameScene: SKScene {
     }
 
     /// Dramatic neon shard burst — mix of dots and elongated rectangles.
-    private func spawnNeonShards(at position: CGPoint, baseColor: SKColor, count: Int = 20) {
+    private func spawnNeonShards(at position: CGPoint, baseColor: SKColor, count: Int = 10) {
         let accents: [SKColor] = [
             baseColor,
             baseColor.withAlphaComponent(0.65),
@@ -771,7 +795,7 @@ final class GameScene: SKScene {
             }
             particle.fillColor   = accents[i % accents.count]
             particle.strokeColor = .clear
-            particle.glowWidth   = cellSize * 0.26
+            // Removed glowWidth from individual shards as it creates significant main-thread lag when multiple cells clear.
             particle.position    = position
             particle.zPosition   = 210
             effectsLayer.addChild(particle)

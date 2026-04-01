@@ -81,6 +81,12 @@ struct StudioSplashView: View {
             logoVisible = true
             glowPulse   = true
 
+            // ── AdMob Initialization ──────────────────────────────────────
+            // Start the privacy/consent flow as early as possible.
+            Task {
+                await AdsManager.shared.runConsentAndTrackingFlowIfNeeded()
+            }
+
             // After 1.6 seconds transition to main menu (reduced from 2.0s)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
                 navigateToMenu = true

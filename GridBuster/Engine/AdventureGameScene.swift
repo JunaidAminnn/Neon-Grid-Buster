@@ -366,7 +366,7 @@ final class AdventureGameScene: SKScene {
         )
 
         let shapes = engine.trayData.compactMap { $0?.shape }
-        let commonCS = trayCellSize(for: shapes)
+        _ = trayCellSize(for: shapes)
 
         for i in 0..<3 {
             guard let node = tray[i] else { continue }
@@ -482,7 +482,7 @@ final class AdventureGameScene: SKScene {
         }
 
         // ── 2. Animate placement visuals (before engine mutates state) ────
-        let placed = engine.grid.cellStates   // snapshot for coordinate reference
+        _ = engine.grid.cellStates   // snapshot for coordinate reference
         // We drive placement animation from engine's applyMove result via grid sync
         let tempShape = item.shape
         let tempColor = item.color
@@ -599,7 +599,7 @@ final class AdventureGameScene: SKScene {
         }
     }
 
-    private func spawnNeonShards(at position: CGPoint, baseColor: SKColor, count: Int = 20) {
+    private func spawnNeonShards(at position: CGPoint, baseColor: SKColor, count: Int = 10) {
         let accents: [SKColor] = [baseColor,
                                   baseColor.withAlphaComponent(0.65),
                                   SKColor(white: 1.0, alpha: 0.88)]
@@ -615,7 +615,7 @@ final class AdventureGameScene: SKScene {
             }
             particle.fillColor   = accents[i % accents.count]
             particle.strokeColor = .clear
-            particle.glowWidth   = cellSize * 0.26
+            // Removed glowWidth from individual shards as it creates significant main-thread lag when multiple cells clear.
             particle.position    = position
             particle.zPosition   = 210
             effectsLayer.addChild(particle)

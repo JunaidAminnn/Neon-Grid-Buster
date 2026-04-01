@@ -85,6 +85,7 @@ struct AdventureGameView: View {
                 AdventureGameOverOverlay(
                     score:     engine.score,
                     playAgain: { restartLevel() },
+                    continueGame: { engine.continueAfterAd() },
                     goHome:    { dismiss() }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.94)))
@@ -431,16 +432,17 @@ private struct LevelWonOverlay: View {
 // MARK: - AdventureGameOverOverlay
 
 private struct AdventureGameOverOverlay: View {
-    let score:     Int
-    let playAgain: () -> Void
-    let goHome:    () -> Void
+    let score:        Int
+    let playAgain:    () -> Void
+    let continueGame: () -> Void
+    let goHome:       () -> Void
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.62).ignoresSafeArea()
 
             VStack(spacing: 16) {
-                // Title
+                // ... (rest of the code remains similar)
                 VStack(spacing: 6) {
                     Text("NO MOVES LEFT")
                         .font(.system(size: 26, weight: .black, design: .rounded))
@@ -488,6 +490,19 @@ private struct AdventureGameOverOverlay: View {
 
                 // Buttons
                 VStack(spacing: 10) {
+                    NeonGameOverButton(
+                        title:       "Watch Ad",
+                        systemIcon:  "play.rectangle.fill",
+                        accentColor: Color(red: 0, green: 0.8, blue: 0.4),
+                        glowColor:   Color(red: 0, green: 1, blue: 0)
+                    ) {
+                        AdsManager.shared.showRewardedAd { earned in
+                            if earned {
+                                continueGame()
+                            }
+                        }
+                    }
+
                     NeonGameOverButton(
                         title:       "Try Again",
                         systemIcon:  "arrow.counterclockwise",

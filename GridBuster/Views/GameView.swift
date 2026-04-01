@@ -118,6 +118,7 @@ struct GameView: View {
                     score:     container.scoreManager.score,
                     best:      container.scoreManager.bestScore,
                     playAgain: { container.scene.startNewGame() },
+                    continueGame: { container.scene.continueAfterAd() },
                     goHome:    { dismiss() }
                 )
                 .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -173,6 +174,12 @@ struct GameView: View {
                         .font(.system(size: 22, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(red: 1.0, green: 0.35, blue: 0.5)) // Pinkish
                         .contentTransition(.numericText())
+                }
+                .onTapGesture(count: 3) {
+                    #if DEBUG
+                    print("Debug: 3-tap on high score triggered Game Over")
+                    #endif
+                    container.scoreManager.isGameOver = true
                 }
 
                 Spacer()
@@ -264,10 +271,11 @@ private struct NeonScoreLabel: View {
 // MARK: - GameOverOverlay
 
 private struct GameOverOverlay: View {
-    let score:     Int
-    let best:      Int
-    let playAgain: () -> Void
-    let goHome:    () -> Void
+    let score:         Int
+    let best:          Int
+    let playAgain:     () -> Void
+    let continueGame:  () -> Void
+    let goHome:        () -> Void
 
     var body: some View {
         ZStack {
@@ -328,8 +336,11 @@ private struct GameOverOverlay: View {
                         accentColor: Color(red: 0.0, green: 0.8, blue: 0.4),
                         glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0)
                     ) {
-                        // TODO: Implement Watch Ad functionality
-                        print("Watch Ad clicked")
+                        AdsManager.shared.showRewardedAd { earned in
+                            if earned {
+                                continueGame()
+                            }
+                        }
                     }
 
                     NeonGameOverButton(
@@ -369,7 +380,7 @@ private struct GameOverOverlay: View {
 
 // MARK: - NeonGameOverButton
 
-private struct NeonGameOverButton: View {
+struct NeonGameOverButton: View {
     let title:       String
     let systemIcon:  String
     let accentColor: Color
@@ -429,7 +440,7 @@ private struct NeonGameOverButton: View {
 
 // MARK: - GameOverScoreRow
 
-private struct GameOverScoreRow: View {
+struct GameOverScoreRow: View {
     let icon:  String
     let label: String
     let value: Int

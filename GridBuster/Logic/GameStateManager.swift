@@ -5,6 +5,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 // MARK: - SavedGameState
 struct SavedGameState: Codable {

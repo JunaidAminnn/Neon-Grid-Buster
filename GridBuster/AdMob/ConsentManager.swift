@@ -2,6 +2,7 @@ import Foundation
 import UserMessagingPlatform
 import GoogleMobileAds
 import UIKit
+import Combine
 
 /// Enum to track user's consent decision for "Pay or Okay" model (if used)
 enum ConsentStatus: String {
@@ -32,10 +33,10 @@ class ConsentManager: ObservableObject {
     }
     
     func requestConsent(from viewController: UIViewController? = nil, completion: @escaping (ConsentStatus) -> Void) {
-        let parameters = UMPRequestParameters()
+        let parameters = RequestParameters()
         
         // 1. Request updated consent information
-        UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: parameters) { [weak self] error in
+        ConsentInformation.shared.requestConsentInfoUpdate(with: parameters) { [weak self] error in
             guard let self = self else { return }
             
             if let error = error {
@@ -53,7 +54,7 @@ class ConsentManager: ObservableObject {
             }
             
             // 2. Load and present the consent form if required
-            UMPConsentForm.loadAndPresentIfRequired(from: viewController) { [weak self] error in
+            ConsentForm.loadAndPresentIfRequired(from: viewController) { [weak self] error in
                 guard let self = self else { return }
                 
                 if let error = error {
@@ -67,7 +68,7 @@ class ConsentManager: ObservableObject {
                     self.consentStatus = status
                     self.saveConsentStatus()
                     
-                    if UMPConsentInformation.sharedInstance.canRequestAds {
+                    if ConsentInformation.shared.canRequestAds {
                         self.canRequestAds = true
                     }
                     
@@ -79,7 +80,7 @@ class ConsentManager: ObservableObject {
     }
     
     private func determineConsentStatus() -> ConsentStatus {
-        let consentInfo = UMPConsentInformation.sharedInstance
+        let consentInfo = ConsentInformation.shared
         
         if consentInfo.canRequestAds {
             return .consented
@@ -109,7 +110,7 @@ class ConsentManager: ObservableObject {
     
     #if DEBUG
     func resetConsent() {
-        UMPConsentInformation.sharedInstance.reset()
+        ConsentInformation.shared.reset()
         consentStatus = .notDetermined
         canRequestAds = false
         consentGatheringComplete = false

@@ -73,14 +73,14 @@ fileprivate struct BannerAdRepresentable: UIViewControllerRepresentable {
         Coordinator(self)
     }
     
-    class Coordinator: NSObject, GADBannerViewDelegate {
+    class Coordinator: NSObject, BannerViewDelegate {
         var parent: BannerAdRepresentable
         
         init(_ parent: BannerAdRepresentable) {
             self.parent = parent
         }
         
-        func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             #if DEBUG
             print("AdMob: Banner received for \(bannerView.adUnitID ?? "")")
             #endif
@@ -90,7 +90,7 @@ fileprivate struct BannerAdRepresentable: UIViewControllerRepresentable {
             }
         }
         
-        func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             #if DEBUG
             print("AdMob: Banner failed for \(bannerView.adUnitID ?? ""): \(error.localizedDescription)")
             #endif
@@ -108,8 +108,8 @@ fileprivate struct BannerAdRepresentable: UIViewControllerRepresentable {
         
         let width = UIScreen.main.bounds.width
         // Use adaptive size
-        let bannerSize = GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth(width)
-        let banner = GADBannerView(adSize: bannerSize)
+        let bannerSize = largePortraitAnchoredAdaptiveBanner(width: width)
+        let banner = BannerView(adSize: bannerSize)
         banner.adUnitID = adUnitID
         banner.rootViewController = viewController
         banner.delegate = context.coordinator
@@ -126,7 +126,7 @@ fileprivate struct BannerAdRepresentable: UIViewControllerRepresentable {
             banner.heightAnchor.constraint(equalToConstant: BannerAdView.bannerHeight)
         ])
         
-        banner.load(GADRequest())
+        banner.load(Request())
         
         return viewController
     }

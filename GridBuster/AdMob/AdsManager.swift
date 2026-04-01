@@ -8,11 +8,11 @@ import Combine
 struct AdUnitIDs {
     #if DEBUG
     // Standard AdMob Test Ad Unit IDs
-    static let bannerGlobal         = "ca-app-pub-3940256099942544/2934735716"
-    static let interstitialGlobal   = "ca-app-pub-3940256099942544/4411468910"
-    static let openApp              = "ca-app-pub-3940256099942544/5662855259"
-    static let rewardedGame        = "ca-app-pub-3940256099942544/5224354917"
-    static let rewardedGlobal      = "ca-app-pub-3940256099942544/5224354917"
+        static let bannerGlobal         = "ca-app-pub-3940256099942544/2934735716"
+        static let interstitialGlobal   = "ca-app-pub-3940256099942544/4411468910"
+        static let openApp              = "ca-app-pub-3940256099942544/5575463023"
+        static let rewardedGame         = "ca-app-pub-3940256099942544/1712485313"
+        static let rewardedGlobal       = "ca-app-pub-3940256099942544/1712485313"
     #else
     // Real Production Ad Unit IDs provided by user
     static let bannerGlobal         = "ca-app-pub-7248360860042690/6799555717"
@@ -57,9 +57,9 @@ class AdsManager: NSObject, ObservableObject {
     private var hasAnyBannerSucceeded: Bool = false
     
     // Ad Store
-    @Published var interstitial: GADInterstitialAd?
-    @Published var rewardedAd: GADRewardedAd?
-    @Published var appOpenAd: GADAppOpenAd?
+    @Published var interstitial: InterstitialAd?
+    @Published var rewardedAd: RewardedAd?
+    @Published var appOpenAd: AppOpenAd?
     
     @AppStorage("adsConsentAndTrackingResolved") private var storedConsentAndTrackingResolved: Bool = false
     @AppStorage("adsTrackingPermissionState")   private var storedTrackingPermissionStateRaw: String = AdTrackingPermissionState.notDetermined.rawValue
@@ -110,17 +110,28 @@ class AdsManager: NSObject, ObservableObject {
     }
     
     func initializeAdsIfNeeded() {
-        guard !adSDKInitialized && !isInitializingAds else { return }
+        guard !adSDKInitialized && !isInitializingAds else { 
+            #if DEBUG
+            print("AdMob: Already initialized or in progress (Initialized: \(adSDKInitialized), Progress: \(isInitializingAds))")
+            #endif
+            return 
+        }
         isInitializingAds = true
         
         #if DEBUG
-        print("AdMob: Initializing SDK...")
+        print("AdMob: Starting SDK initialization...")
         #endif
         
-        GADMobileAds.sharedInstance().start { _ in
-            Task { @MainActor in
+        MobileAds.shared.start { [weak self] status in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
                 self.adSDKInitialized = true
                 self.isInitializingAds = false
+                
+                #if DEBUG
+                print("AdMob: SDK Initialization complete. Adapter statuses: \(status.adapterStatusesByClassName)")
+                #endif
+                
                 self.startSessionGraceTimer()
                 self.loadInterstitial()
                 self.loadAppOpenAd()
@@ -256,7 +267,7 @@ class AdsManager: NSObject, ObservableObject {
         
         sessionGraceTimer?.invalidate()
         sessionGraceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 if !self.hasAnyBannerSucceeded {
                     self.shouldShowBannersThisSession = false
@@ -270,18 +281,22 @@ class AdsManager: NSObject, ObservableObject {
     func loadAppOpenAd() {
         guard shouldShowAds else { return }
         
-        GADAppOpenAd.load(withAdUnitID: AdUnitIDs.openApp, request: GADRequest()) { [weak self] ad, error in
+        AppOpenAd.load(with: AdUnitIDs.openApp, request: Request()) { [weak self] ad, error in
             if let error = error {
                 #if DEBUG
-                print("AdMob: App Open load failed: \(error.localizedDescription)")
+                print("AdMob: App Open load FAILED: \(error.localizedDescription) for ID: \(AdUnitIDs.openApp)")
                 #endif
                 return
             }
-            Task { @MainActor in
-                self?.appOpenAd = ad
-                self?.appOpenAd?.fullScreenContentDelegate = self
-                self?.appOpenAdLoadTime = Date()
-                self?.reportBannerSuccess()
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                #if DEBUG
+                print("AdMob: App Open load SUCCESS")
+                #endif
+                self.appOpenAd = ad
+                self.appOpenAd?.fullScreenContentDelegate = self
+                self.appOpenAdLoadTime = Date()
+                self.reportBannerSuccess()
             }
         }
     }
@@ -308,7 +323,7 @@ class AdsManager: NSObject, ObservableObject {
     private func showAppOpenAd(completion: @escaping () -> Void) {
         if isAppOpenAdAvailable() {
             if let topController = getTopViewController() {
-                appOpenAd?.present(fromRootViewController: topController)
+                appOpenAd?.present(from: topController)
                 self.onAdDismissed = completion
             } else {
                 completion()
@@ -324,17 +339,21 @@ class AdsManager: NSObject, ObservableObject {
     func loadInterstitial() {
         guard shouldShowAds else { return }
         
-        GADInterstitialAd.load(withAdUnitID: AdUnitIDs.interstitialGlobal, request: GADRequest()) { [weak self] ad, error in
+        InterstitialAd.load(with: AdUnitIDs.interstitialGlobal, request: Request()) { [weak self] ad, error in
             if let error = error {
                 #if DEBUG
-                print("AdMob: Interstitial load failed: \(error.localizedDescription)")
+                print("AdMob: Interstitial load FAILED: \(error.localizedDescription) for ID: \(AdUnitIDs.interstitialGlobal)")
                 #endif
                 return
             }
-            Task { @MainActor in
-                self?.interstitial = ad
-                self?.interstitial?.fullScreenContentDelegate = self
-                self?.reportBannerSuccess()
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                #if DEBUG
+                print("AdMob: Interstitial load SUCCESS")
+                #endif
+                self.interstitial = ad
+                self.interstitial?.fullScreenContentDelegate = self
+                self.reportBannerSuccess()
             }
         }
     }
@@ -355,7 +374,7 @@ class AdsManager: NSObject, ObservableObject {
     
     private func showInterstitial(completion: @escaping () -> Void) {
         if let ad = interstitial, let topController = getTopViewController() {
-            ad.present(fromRootViewController: topController)
+            ad.present(from: topController)
             self.onAdDismissed = completion
         } else {
             loadInterstitial()
@@ -368,17 +387,21 @@ class AdsManager: NSObject, ObservableObject {
     func loadRewardedAd() {
         guard shouldShowAds else { return }
         
-        GADRewardedAd.load(withAdUnitID: AdUnitIDs.rewardedGlobal, request: GADRequest()) { [weak self] ad, error in
+        RewardedAd.load(with: AdUnitIDs.rewardedGame, request: Request()) { [weak self] ad, error in
             if let error = error {
                 #if DEBUG
-                print("AdMob: Rewarded load failed: \(error.localizedDescription)")
+                print("AdMob: Rewarded load FAILED: \(error.localizedDescription) for ID: \(AdUnitIDs.rewardedGame)")
                 #endif
                 return
             }
-            Task { @MainActor in
-                self?.rewardedAd = ad
-                self?.rewardedAd?.fullScreenContentDelegate = self
-                self?.reportBannerSuccess()
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                #if DEBUG
+                print("AdMob: Rewarded load SUCCESS")
+                #endif
+                self.rewardedAd = ad
+                self.rewardedAd?.fullScreenContentDelegate = self
+                self.reportBannerSuccess()
             }
         }
     }
@@ -391,7 +414,7 @@ class AdsManager: NSObject, ObservableObject {
         
         if let ad = rewardedAd, let topController = getTopViewController() {
             var rewardEarned = false
-            ad.present(fromRootViewController: topController) {
+            ad.present(from: topController) {
                 rewardEarned = true
             }
             self.onAdDismissed = {
@@ -422,22 +445,22 @@ class AdsManager: NSObject, ObservableObject {
     }
 }
 
-// MARK: - GADFullScreenContentDelegate
-extension AdsManager: GADFullScreenContentDelegate {
-    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+// MARK: - FullScreenContentDelegate
+extension AdsManager: FullScreenContentDelegate {
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
         onAdDismissed?()
         onAdDismissed = nil
         
-        if ad is GADAppOpenAd { loadAppOpenAd() }
-        else if ad is GADRewardedAd { loadRewardedAd() }
+        if ad is AppOpenAd { loadAppOpenAd() }
+        else if ad is RewardedAd { loadRewardedAd() }
         else { loadInterstitial() }
     }
     
-    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
         onAdDismissed?()
         onAdDismissed = nil
-        if ad is GADAppOpenAd { loadAppOpenAd() }
-        else if ad is GADRewardedAd { loadRewardedAd() }
+        if ad is AppOpenAd { loadAppOpenAd() }
+        else if ad is RewardedAd { loadRewardedAd() }
         else { loadInterstitial() }
     }
 }
