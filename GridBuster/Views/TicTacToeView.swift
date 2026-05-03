@@ -145,28 +145,32 @@ struct TicTacToeView: View {
     
     var winnerName: String {
         if let winner = winner { return winner == "X" ? player1Name : player2Name }
-        return "STALEMATE"
+        return "GRID LOCKED"
     }
     
     var winnerColor: Color {
         if let winner = winner { return winner == "X" ? player1Color : player2Color }
-        return .white
+        return Theme.Palette.neonYellow // Neutral pro color for tie
     }
     
     var currentTurnColor: Color {
-        if gameOver { return .gray }
+        if gameOver { return winner == nil ? Theme.Palette.neonYellow : winnerColor }
         return isXTurn ? player1Color : player2Color
     }
     
     var boardGlowColor: Color {
         if let winner = winner { return winner == "X" ? player1Color : player2Color }
+        if gameOver && winner == nil { return Theme.Palette.neonYellow }
         return isXTurn ? player1Color : player2Color
     }
     
     var statusText: String {
         if let _ = winner { return "\(winnerName.uppercased()) VICTORIOUS!" }
-        else if gameOver { return "STALEMATE" }
-        else { return "\((isXTurn ? player1Name : player2Name).uppercased())'S TURN" }
+        else if gameOver { return "GRID LOCKED" }
+        else { 
+            let name = isXTurn ? (player1Name.isEmpty ? "Player 1" : player1Name) : (player2Name.isEmpty ? "Player 2" : player2Name)
+            return "\(name.uppercased())'S TURN" 
+        }
     }
     
     func makeMove(at index: Int) {
@@ -301,12 +305,12 @@ struct VictoryOverlay: View {
             
             VStack(spacing: 35) {
                 VStack(spacing: 12) {
-                    Text(isDraw ? "STALEMATE" : "VICTORY")
+                    Text(isDraw ? "GRID LOCKED" : "VICTORY")
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .foregroundStyle(winnerColor)
                         .tracking(10)
                     
-                    Text(isDraw ? "NO ONE WON" : "\(winnerName.uppercased())")
+                    Text(isDraw ? "NO ONE SURVIVES" : "\(winnerName.uppercased())")
                         .font(.system(size: 32, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
