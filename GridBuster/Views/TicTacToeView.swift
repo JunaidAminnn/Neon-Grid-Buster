@@ -92,12 +92,16 @@ struct TicTacToeView: View {
                 
                 // Game Board
                 ZStack {
-                    // Outer glow for the board
-                    RoundedRectangle(cornerRadius: 30)
-                        .fill(Color.black.opacity(0.4))
-                        .shadow(color: boardGlowColor.opacity(0.25), radius: 30)
+                    // Board Background Glow
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(Color.black.opacity(0.6))
+                        .shadow(color: boardGlowColor.opacity(0.35), radius: 40)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(boardGlowColor.opacity(0.25), lineWidth: 2)
+                        )
                     
-                    LazyVGrid(columns: columns, spacing: 18) {
+                    LazyVGrid(columns: columns, spacing: 20) {
                         ForEach(0..<9) { index in
                             NeonCell(
                                 value: board[index],
@@ -117,7 +121,7 @@ struct TicTacToeView: View {
                 Spacer()
             }
             
-            // Player Setup Overlay
+            // Player Setup Overlay (The Hub)
             if showSetup {
                 SetupOverlay(
                     p1Name: $player1Name,
@@ -134,6 +138,7 @@ struct TicTacToeView: View {
                         }
                     }
                 )
+                .zIndex(10)
             }
             
             // Victory Overlay
@@ -145,6 +150,7 @@ struct TicTacToeView: View {
                     onRestart: resetGame,
                     onExit: { dismiss() }
                 )
+                .zIndex(20)
             }
         }
         .navigationBarHidden(true)
@@ -181,7 +187,7 @@ struct TicTacToeView: View {
         if let winner = winner {
             return winner == "X" ? player1Color : player2Color
         }
-        return .white
+        return isXTurn ? player1Color : player2Color
     }
     
     var statusText: String {
@@ -198,7 +204,7 @@ struct TicTacToeView: View {
     func makeMove(at index: Int) {
         guard board[index] == "" && !gameOver && !showSetup else { return }
         
-        withAnimation(.spring(response: 0.25, dampingFraction: 0.65)) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             board[index] = isXTurn ? "X" : "O"
             checkWinner()
             if !gameOver {
@@ -232,7 +238,7 @@ struct TicTacToeView: View {
     }
     
     func startWinAnimation() {
-        withAnimation(.easeInOut(duration: 0.3).repeatForever(autoreverses: true)) {
+        withAnimation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
             winFlash = true
         }
     }
@@ -261,17 +267,22 @@ struct SetupOverlay: View {
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.9).ignoresSafeArea()
-                .blur(radius: 10)
+            Color.black.opacity(0.95).ignoresSafeArea()
             
-            VStack(spacing: 30) {
-                Text("NEON SETUP")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                    .tracking(6)
-                    .shadow(color: p1Color.opacity(0.5), radius: 10)
+            VStack(spacing: 35) {
+                VStack(spacing: 8) {
+                    Text("NEON COMMAND")
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(p1Color)
+                        .tracking(10)
+                    
+                    Text("PRE-GAME SETUP")
+                        .font(.system(size: 32, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: p1Color.opacity(0.6), radius: 15)
+                }
                 
-                VStack(spacing: 25) {
+                VStack(spacing: 30) {
                     SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", colors: colors)
                     SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", colors: colors)
                 }
@@ -279,24 +290,25 @@ struct SetupOverlay: View {
                 
                 Button(action: onStart) {
                     Text("LAUNCH BATTLE")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
+                        .font(.system(size: 22, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 50)
-                        .padding(.vertical, 18)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 22)
                         .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(p1Color.opacity(0.15))
-                                .overlay(RoundedRectangle(cornerRadius: 20).stroke(LinearGradient(colors: [p1Color, p2Color], startPoint: .leading, endPoint: .trailing), lineWidth: 3))
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(p1Color.opacity(0.2))
+                                .overlay(RoundedRectangle(cornerRadius: 24).stroke(LinearGradient(colors: [p1Color, p2Color], startPoint: .leading, endPoint: .trailing), lineWidth: 3))
                         )
-                        .shadow(color: p1Color.opacity(0.4), radius: 15)
+                        .shadow(color: p1Color.opacity(0.6), radius: 20)
                 }
+                .padding(.horizontal, 25)
                 .padding(.top, 10)
             }
-            .padding(30)
+            .padding(.vertical, 40)
             .background(
-                RoundedRectangle(cornerRadius: 35)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(RoundedRectangle(cornerRadius: 35).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                RoundedRectangle(cornerRadius: 40)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(RoundedRectangle(cornerRadius: 40).stroke(Color.white.opacity(0.1), lineWidth: 1))
             )
             .padding(.horizontal, 20)
         }
@@ -309,34 +321,44 @@ struct SetupSection: View {
     let label: String
     let colors: [Color]
     
+    @FocusState private var isFocused: Bool
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 15) {
             Text(label)
                 .font(.system(size: 14, weight: .black, design: .rounded))
                 .foregroundStyle(selectedColor)
-                .tracking(2)
+                .tracking(3)
             
             TextField("Commander Name", text: $name)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .padding()
+                .focused($isFocused)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .padding(18)
                 .background(Color.white.opacity(0.08))
-                .cornerRadius(15)
-                .overlay(RoundedRectangle(cornerRadius: 15).stroke(selectedColor.opacity(0.4), lineWidth: 2))
+                .cornerRadius(18)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(isFocused ? selectedColor : selectedColor.opacity(0.3), lineWidth: 2)
+                )
                 .foregroundStyle(.white)
+                .tint(selectedColor)
             
-            HStack(spacing: 12) {
+            HStack(spacing: 15) {
                 ForEach(colors, id: \.self) { color in
                     Circle()
                         .fill(color)
-                        .frame(width: 28, height: 28)
-                        .overlay(Circle().stroke(Color.white, lineWidth: selectedColor == color ? 3 : 0))
-                        .shadow(color: color.opacity(0.6), radius: 5)
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Circle().stroke(Color.white, lineWidth: selectedColor == color ? 3 : 0)
+                        )
+                        .shadow(color: color.opacity(0.8), radius: 8)
                         .onTapGesture {
-                            withAnimation(.spring()) { selectedColor = color }
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { 
+                                selectedColor = color 
+                            }
                         }
                 }
             }
-            .padding(.top, 4)
         }
     }
 }
@@ -350,48 +372,50 @@ struct VictoryOverlay: View {
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.85).ignoresSafeArea()
+            Color.black.opacity(0.92).ignoresSafeArea()
             
-            VStack(spacing: 40) {
-                VStack(spacing: 10) {
+            VStack(spacing: 50) {
+                VStack(spacing: 15) {
                     Text(isDraw ? "STALEMATE" : "VICTORY")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .font(.system(size: 64, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                        .shadow(color: winnerColor, radius: 20)
+                        .shadow(color: winnerColor, radius: 25)
                     
                     if !isDraw {
                         Text(winnerName.uppercased())
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundStyle(winnerColor)
-                            .tracking(8)
+                            .tracking(10)
+                            .shadow(color: winnerColor.opacity(0.5), radius: 10)
                     }
                 }
                 
-                VStack(spacing: 18) {
+                VStack(spacing: 20) {
                     Button(action: onRestart) {
                         Text("BATTLE AGAIN")
-                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .font(.system(size: 22, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 20)
+                            .padding(.vertical, 24)
                             .background(
-                                RoundedRectangle(cornerRadius: 20)
+                                RoundedRectangle(cornerRadius: 24)
                                     .fill(winnerColor.opacity(0.2))
-                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(winnerColor, lineWidth: 3))
+                                    .overlay(RoundedRectangle(cornerRadius: 24).stroke(winnerColor, lineWidth: 3))
                             )
-                            .shadow(color: winnerColor.opacity(0.5), radius: 15)
+                            .shadow(color: winnerColor.opacity(0.6), radius: 20)
                     }
                     
                     Button(action: onExit) {
                         Text("EXIT TO HUB")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.6))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .tracking(4)
                     }
                 }
                 .padding(.horizontal, 40)
             }
-            .transition(.scale.combined(with: .opacity))
         }
+        .transition(.scale.combined(with: .opacity))
     }
 }
 
@@ -424,25 +448,25 @@ struct StatusIndicator: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Circle()
                 .fill(color)
-                .frame(width: 10, height: 10)
-                .shadow(color: color, radius: 5)
+                .frame(width: 12, height: 12)
+                .shadow(color: color, radius: 8)
             
             Text(text)
-                .font(.system(size: 16, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.9))
-                .tracking(3)
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .tracking(4)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 12)
         .background(
             Capsule()
                 .fill(Color.white.opacity(0.08))
-                .overlay(Capsule().stroke(color.opacity(0.3), lineWidth: 1))
+                .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 2))
         )
-        .shadow(color: color.opacity(0.2), radius: 10)
+        .shadow(color: color.opacity(0.3), radius: 15)
     }
 }
 
@@ -457,33 +481,33 @@ struct NeonCell: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.black.opacity(0.3))
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.4))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18)
+                        RoundedRectangle(cornerRadius: 20)
                             .stroke(
-                                isWinningCell ? (winFlash ? Color.white : cellColor) : Color.white.opacity(0.12),
-                                lineWidth: isWinningCell ? 4 : 2
+                                isWinningCell ? (winFlash ? Color.white : cellColor) : cellColor.opacity(0.15),
+                                lineWidth: isWinningCell ? 5 : 2
                             )
                     )
-                    .shadow(color: isWinningCell ? cellColor.opacity(0.6) : .clear, radius: 15)
+                    .shadow(color: isWinningCell ? cellColor.opacity(0.8) : .clear, radius: 20)
                 
                 if value != "" {
                     ZStack {
-                        // Outer bloom
+                        // Massive outer bloom
                         Text(value)
-                            .font(.system(size: 54, weight: .black, design: .rounded))
+                            .font(.system(size: 60, weight: .black, design: .rounded))
                             .foregroundStyle(isWinningCell && winFlash ? Color.white : cellColor)
-                            .blur(radius: 15)
-                            .opacity(0.8)
+                            .blur(radius: 20)
+                            .opacity(0.9)
                         
                         // Crisp white core
                         Text(value)
-                            .font(.system(size: 54, weight: .black, design: .rounded))
+                            .font(.system(size: 60, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
-                            .shadow(color: cellColor, radius: 8)
-                            .shadow(color: cellColor.opacity(0.6), radius: 20)
-                            .scaleEffect(isWinningCell && winFlash ? 1.1 : 1.0)
+                            .shadow(color: cellColor, radius: 10)
+                            .shadow(color: cellColor.opacity(0.7), radius: 25)
+                            .scaleEffect(isWinningCell && winFlash ? 1.15 : 1.0)
                     }
                     .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
@@ -494,7 +518,9 @@ struct NeonCell: View {
     }
     
     var cellColor: Color {
-        value == "X" ? xColor : oColor
+        if value == "X" { return xColor }
+        if value == "O" { return oColor }
+        return .white // Default/Neutral
     }
 }
 
@@ -532,5 +558,6 @@ private struct MenuBackground: View {
         .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulse)
     }
 }
+
 
 
