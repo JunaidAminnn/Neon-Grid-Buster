@@ -56,24 +56,27 @@ struct MoreGamesView: View {
                                 title: "TIC-TAC-TOE",
                                 subtitle: "NEON BATTLE",
                                 imageName: "tic_tac_toe_card",
-                                glowColor: Theme.Palette.neonCyan
+                                glowColor: Theme.Palette.neonCyan,
+                                isAvailable: true
                             )
                         }
                         
                         // Snake Card
                         GameCard(
                             title: "NEON SNAKE",
-                            subtitle: "VIBRANT SLITHER",
+                            subtitle: "COMING SOON",
                             imageName: "snake_game_card",
-                            glowColor: Theme.Palette.neonLime
+                            glowColor: Theme.Palette.neonLime,
+                            isAvailable: false
                         )
                         
                         // Arrow Escape Card
                         GameCard(
                             title: "ARROW ESCAPE",
-                            subtitle: "SPEED RUN",
+                            subtitle: "COMING SOON",
                             imageName: "arrow_escape_card",
-                            glowColor: Theme.Palette.neonOrange
+                            glowColor: Theme.Palette.neonOrange,
+                            isAvailable: false
                         )
                     }
                     .padding(.horizontal, 22)
@@ -93,6 +96,7 @@ struct GameCard: View {
     let subtitle: String
     let imageName: String
     let glowColor: Color
+    let isAvailable: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -115,14 +119,33 @@ struct GameCard: View {
             
             // Text Section
             VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                
-                Text(subtitle)
-                    .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(Color.white.opacity(0.8)) // Brighter gray/white
-                    .tracking(3)
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(title)
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                        
+                        Text(subtitle)
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(Color.white.opacity(0.8))
+                            .tracking(3)
+                    }
+                    
+                    Spacer()
+                    
+                    // Status Button (Play/Lock)
+                    ZStack {
+                        Circle()
+                            .fill(glowColor.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                            .overlay(Circle().stroke(glowColor.opacity(0.6), lineWidth: 2))
+                            .shadow(color: glowColor.opacity(0.5), radius: 10)
+                        
+                        Image(systemName: isAvailable ? "play.fill" : "lock.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                }
             }
             .padding(.horizontal, 22)
             .padding(.vertical, 18)
