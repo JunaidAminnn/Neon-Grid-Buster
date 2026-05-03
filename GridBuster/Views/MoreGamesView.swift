@@ -11,8 +11,6 @@ struct MoreGamesView: View {
     @Environment(\.dismiss) var dismiss
     @State private var glowPulse = false
     
-    let columns = [GridItem(.flexible(), spacing: 20)]
-    
     var body: some View {
         ZStack {
             // Background
@@ -35,11 +33,17 @@ struct MoreGamesView: View {
                     
                     Spacer()
                     
-                    Text("MORE GAMES")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(color: Color.cyan, radius: 10)
-                        .shadow(color: Color.cyan.opacity(0.5), radius: 20)
+                    VStack(spacing: 2) {
+                        Text("GAMES HUB")
+                            .font(.system(size: 12, weight: .black, design: .rounded))
+                            .foregroundStyle(Theme.Palette.neonCyan)
+                            .tracking(8)
+                        
+                        Text("MORE GAMES")
+                            .font(.system(size: 32, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .shadow(color: Theme.Palette.neonCyan, radius: 15)
+                    }
                     
                     Spacer()
                     
@@ -48,17 +52,18 @@ struct MoreGamesView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 10)
-                .padding(.bottom, 20)
+                .padding(.bottom, 30)
                 
-                ScrollView {
-                    VStack(spacing: 25) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 30) {
                         // Tic-Tac-Toe Card (Functional)
                         NavigationLink(destination: TicTacToeView()) {
                             GameCard(
                                 title: "TIC-TAC-TOE",
                                 subtitle: "NEON BATTLE",
-                                imagePath: "tic_tac_toe_card_1777812887098.png",
-                                glowColor: Color.cyan
+                                imageName: "tic_tac_toe_card",
+                                glowColor: Theme.Palette.neonCyan,
+                                isAvailable: true
                             )
                         }
                         
@@ -66,22 +71,22 @@ struct MoreGamesView: View {
                         GameCard(
                             title: "NEON SNAKE",
                             subtitle: "COMING SOON",
-                            imagePath: "snake_game_card_1777812902809.png",
-                            glowColor: Color.green
+                            imageName: "snake_game_card",
+                            glowColor: Theme.Palette.neonLime,
+                            isAvailable: false
                         )
-                        .opacity(0.8)
                         
                         // Arrow Escape Card (Placeholder)
                         GameCard(
                             title: "ARROW ESCAPE",
                             subtitle: "COMING SOON",
-                            imagePath: "arrow_escape_card_1777812919540.png",
-                            glowColor: Color.orange
+                            imageName: "arrow_escape_card",
+                            glowColor: Theme.Palette.neonOrange,
+                            isAvailable: false
                         )
-                        .opacity(0.8)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 40)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 60)
                 }
             }
         }
@@ -95,68 +100,102 @@ struct MoreGamesView: View {
 struct GameCard: View {
     let title: String
     let subtitle: String
-    let imagePath: String
+    let imageName: String
     let glowColor: Color
+    let isAvailable: Bool
+    
+    @State private var pulse = false
+    @State private var angle: Double = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Image Section
             ZStack {
-                if let uiImage = UIImage(contentsOfFile: "/Users/junaidamin/Documents/Projects/Neon Grid Buster/GridBuster/Resources/Images/\(imagePath)") {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 180)
-                        .clipped()
-                } else {
-                    Rectangle()
-                        .fill(Color.black.opacity(0.5))
-                        .frame(height: 180)
-                        .overlay(Text("Loading...").foregroundColor(.white))
-                }
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 200)
+                    .clipped()
+                    .grayscale(isAvailable ? 0 : 0.6)
+                    .brightness(isAvailable ? 0 : -0.1)
                 
                 // Subtle gradient overlay
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.6)],
+                    colors: [.clear, .black.opacity(0.8)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
+                
+                if !isAvailable {
+                    VStack {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 30))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .shadow(color: glowColor, radius: 10)
+                    }
+                }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             
             // Text Section
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 24, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    
+                    Spacer()
+                    
+                    if isAvailable {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white)
+                            .padding(8)
+                            .background(Circle().fill(glowColor.opacity(0.8)))
+                            .shadow(color: glowColor, radius: 10)
+                    }
+                }
                 
                 Text(subtitle)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(glowColor.opacity(0.9))
-                    .tracking(2)
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(isAvailable ? glowColor : Color.gray)
+                    .tracking(3)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 15)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.05))
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.white.opacity(0.06))
                 .blur(radius: 0.5)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(
                     LinearGradient(
-                        colors: [glowColor.opacity(0.6), glowColor.opacity(0.1), glowColor.opacity(0.4)],
+                        colors: [
+                            glowColor.opacity(isAvailable ? 0.7 : 0.3),
+                            glowColor.opacity(0.1),
+                            glowColor.opacity(isAvailable ? 0.5 : 0.2)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 2
                 )
         )
-        .shadow(color: glowColor.opacity(0.3), radius: 15, x: 0, y: 5)
+        .shadow(color: glowColor.opacity(isAvailable ? (pulse ? 0.4 : 0.2) : 0.1), radius: pulse ? 20 : 15, x: 0, y: 5)
+        .scaleEffect(pulse && isAvailable ? 1.02 : 1.0)
+        .onAppear {
+            if isAvailable {
+                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                    pulse = true
+                }
+            }
+        }
     }
 }
+
 
 // Reuse background from MainMenu for consistency
 private struct MenuBackground: View {
