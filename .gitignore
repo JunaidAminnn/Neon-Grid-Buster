@@ -1,1 +1,63 @@
+# Xcode
+#
+# gitignore contributors: better-gitignore-bot, mtmiller
+
+## Build results
 build/
+DerivedData/
+
+## Root-level config (Firebase)
+GoogleService-Info.plist
+GridBuster/Core/Firebase/GoogleService-Info.plist
+
+## Xcode-specific
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+
+## Localization
+*.lproj
+
+## CocoaPods
+#
+# It is a common practice to not check in the 'Pods' directory, but some
+# developers prefer to check in the 'Pods' directory to ensure reproducible builds.
+# For more information, please see: https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-my-pods-directory-into-source-control
+#
+# Pods/
+
+## Swift Package Manager
+#
+# Add this line if you want to avoid checking in your Swift Package Manager dependencies.
+# .build/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+## Fastlane
+#
+# It is a common practice to not check in the 'fastlane' directory.
+# fastlane/report.xml
+# fastlane/Preview.html
+# fastlane/screenshots/**/*.png
+# fastlane/test_output
+
+## AdMob and Secrets
+# Note: Since AdsManager contains real unit IDs, we'll ignore it to prevent leaks.
+# Users should use a template or mock for public repos.
+GridBuster/Core/AdMob/AdsManager.swift
+
+## Other
+.DS_Store
+*.swp
+*.lock
