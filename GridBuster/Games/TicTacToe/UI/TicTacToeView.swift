@@ -9,34 +9,11 @@ import SwiftUI
 
 struct TicTacToeView: View {
     @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = TicTacToeViewModel()
     
-    // MARK: - State
-    @State private var board: [String] = Array(repeating: "", count: 9)
-    @State private var isXTurn: Bool = true
-    @State private var gameOver: Bool = false
-    @State private var winner: String? = nil
-    @State private var winIndices: [Int] = []
-    
-    // Player Setup
-    @State private var showSetup: Bool = true
-    @State private var player1Name: String = "Player 1"
-    @State private var player2Name: String = "Player 2"
-    @State private var player1Color: Color = Theme.Palette.neonCyan
-    @State private var player2Color: Color = Theme.Palette.neonPink
-    
-    // Animations
+    // UI-only Animations
     @State private var glowPulse: Bool = false
     @State private var titleOffset: CGFloat = -20
-    @State private var winFlash: Bool = false
-    
-    let availableColors: [Color] = [
-        Theme.Palette.neonCyan,
-        Theme.Palette.neonPink,
-        Theme.Palette.neonLime,
-        Theme.Palette.neonYellow,
-        Theme.Palette.neonOrange,
-        Theme.Palette.neonPurple
-    ]
     
     let columns = Array(repeating: GridItem(.flexible(), spacing: 15), count: 3)
     
@@ -63,7 +40,7 @@ struct TicTacToeView: View {
                     
                     Spacer()
                     
-                    Button(action: { withAnimation { showSetup = true } }) {
+                    Button(action: { withAnimation { viewModel.showSetup = true } }) {
                         Image(systemName: "person.2.badge.gearshape.fill")
                             .font(.system(size: 18, weight: .black))
                             .foregroundStyle(.white)
@@ -75,24 +52,24 @@ struct TicTacToeView: View {
                 .padding(.top, 5)
                 
                 // Status Bar
-                StatusIndicator(text: statusText, color: currentTurnColor)
+                StatusIndicator(text: viewModel.statusText, color: viewModel.currentTurnColor)
                 
                 // Game Board
                 ZStack {
                     RoundedRectangle(cornerRadius: 32)
                         .fill(Color.black.opacity(0.6))
-                        .shadow(color: boardGlowColor.opacity(0.4), radius: 40)
-                        .overlay(RoundedRectangle(cornerRadius: 32).stroke(boardGlowColor.opacity(0.3), lineWidth: 2))
+                        .shadow(color: viewModel.boardGlowColor.opacity(0.4), radius: 40)
+                        .overlay(RoundedRectangle(cornerRadius: 32).stroke(viewModel.boardGlowColor.opacity(0.3), lineWidth: 2))
                     
                     LazyVGrid(columns: columns, spacing: 15) {
                         ForEach(0..<9) { index in
                             NeonCell(
-                                value: board[index],
-                                isWinningCell: winIndices.contains(index),
-                                winFlash: winFlash,
-                                xColor: player1Color,
-                                oColor: player2Color,
-                                action: { makeMove(at: index) }
+                                value: viewModel.board[index],
+                                isWinningCell: viewModel.winIndices.contains(index),
+                                winFlash: viewModel.winFlash,
+                                xColor: viewModel.player1Color,
+                                oColor: viewModel.player2Color,
+                                action: { viewModel.makeMove(at: index) }
                             )
                         }
                     }
@@ -105,17 +82,19 @@ struct TicTacToeView: View {
             }
             
             // Player Setup Overlay (NEON COMMAND)
-            if showSetup {
+            if viewModel.showSetup {
                 SetupOverlay(
-                    p1Name: $player1Name,
-                    p2Name: $player2Name,
-                    p1Color: $player1Color,
-                    p2Color: $player2Color,
-                    colors: availableColors,
+                    p1Name: $viewModel.player1Name,
+                    p2Name: $viewModel.player2Name,
+                    p1Color: $viewModel.player1Color,
+                    p2Color: $viewModel.player2Color,
+                    colors: viewModel.availableColors,
                     onStart: {
+                        if viewModel.player1Name.trimmingCharacters(in: .whitespaces).isEmpty { viewModel.player1Name = "Player 1" }
+                        if viewModel.player2Name.trimmingCharacters(in: .whitespaces).isEmpty { viewModel.player2Name = "Player 2" }
                         withAnimation(.spring()) {
-                            showSetup = false
-                            resetGame()
+                            viewModel.showSetup = false
+                            viewModel.resetGame()
                         }
                     }
                 )
@@ -123,12 +102,12 @@ struct TicTacToeView: View {
             }
             
             // Victory Overlay (Detailed Card)
-            if gameOver {
+            if viewModel.gameOver {
                 VictoryOverlay(
-                    winnerName: winnerName,
-                    winnerColor: winnerColor,
-                    isDraw: winner == nil,
-                    onRestart: resetGame,
+                    winnerName: viewModel.winnerName,
+                    winnerColor: viewModel.winnerColor,
+                    isDraw: viewModel.winner == nil,
+                    onRestart: viewModel.resetGame,
                     onExit: { dismiss() }
                 )
                 .zIndex(20)
@@ -138,74 +117,6 @@ struct TicTacToeView: View {
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) { titleOffset = 0 }
             glowPulse = true
-        }
-    }
-    
-    // MARK: - Logic
-    
-    var winnerName: String {
-        if let winner = winner { return winner == "X" ? player1Name : player2Name }
-        return "GRID LOCKED"
-    }
-    
-    var winnerColor: Color {
-        if let winner = winner { return winner == "X" ? player1Color : player2Color }
-        return Theme.Palette.neonYellow // Neutral pro color for tie
-    }
-    
-    var currentTurnColor: Color {
-        if gameOver { return winner == nil ? Theme.Palette.neonYellow : winnerColor }
-        return isXTurn ? player1Color : player2Color
-    }
-    
-    var boardGlowColor: Color {
-        if let winner = winner { return winner == "X" ? player1Color : player2Color }
-        if gameOver && winner == nil { return Theme.Palette.neonYellow }
-        return isXTurn ? player1Color : player2Color
-    }
-    
-    var statusText: String {
-        if let _ = winner { return "\(winnerName.uppercased()) VICTORIOUS!" }
-        else if gameOver { return "GRID LOCKED" }
-        else { 
-            let name = isXTurn ? (player1Name.isEmpty ? "Player 1" : player1Name) : (player2Name.isEmpty ? "Player 2" : player2Name)
-            return "\(name.uppercased())'S TURN" 
-        }
-    }
-    
-    func makeMove(at index: Int) {
-        guard board[index] == "" && !gameOver && !showSetup else { return }
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            board[index] = isXTurn ? "X" : "O"
-            checkWinner()
-            if !gameOver { isXTurn.toggle() }
-        }
-    }
-    
-    func checkWinner() {
-        let patterns: [[Int]] = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
-        for p in patterns {
-            if board[p[0]] != "" && board[p[0]] == board[p[1]] && board[p[0]] == board[p[2]] {
-                withAnimation {
-                    winner = board[p[0]]
-                    winIndices = p
-                    gameOver = true
-                }
-                withAnimation(.easeInOut(duration: 0.4).repeatForever()) { winFlash = true }
-                return
-            }
-        }
-        if !board.contains("") { withAnimation { gameOver = true } }
-    }
-    
-    func resetGame() {
-        withAnimation {
-            board = Array(repeating: "", count: 9)
-            isXTurn = true
-            gameOver = false
-            winner = nil
-            winIndices = []
-            winFlash = false
         }
     }
 }

@@ -12,7 +12,7 @@ import UIKit
 struct NeonGridBusterApp: App {
     init() {
         // Initialize AdMob SDK
-        AdManager.shared.initialize()
+        AdsManager.shared.initialize()
         
         UIView.appearance(whenContainedInInstancesOf: [UIHostingController<MainMenuView>.self]).backgroundColor = .black
         UIView.appearance(whenContainedInInstancesOf: [UIHostingController<GameView>.self]).backgroundColor = .black

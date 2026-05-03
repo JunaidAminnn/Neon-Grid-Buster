@@ -9,9 +9,10 @@
 import Foundation
 import Combine
 import SwiftUI
+import Combine
 
 @MainActor
-final class ScoreManager: ObservableObject {
+final class Score: ObservableObject {
 
     // ── Published state (drives all game UI) ────────────────────────────
     @Published private(set) var score:       Int  = 0
@@ -55,8 +56,8 @@ final class ScoreManager: ObservableObject {
     ///  3 lines =  1 200 pts   (3× the 2-line value)
     ///  4 lines =  4 000 pts   (3.3× the 3-line value)
     ///  5+      continues tripling each additional line.
-    static func lineScore(for linesCleared: Int) -> Int {
-        switch linesCleared {
+    static func lineScore(for lines: Int) -> Int {
+        switch lines {
         case 0:  return 0
         case 1:  return 100
         case 2:  return 400
@@ -65,7 +66,7 @@ final class ScoreManager: ObservableObject {
         default:
             // 5+ lines: continue roughly tripling from the 4-line value.
             var pts = 4_000
-            for _ in 0..<(linesCleared - 4) { pts = pts * 3 }
+            for _ in 0..<(lines - 4) { pts = pts * 3 }
             return pts
         }
     }

@@ -62,8 +62,8 @@ let activeGameTheme: GameTheme = .neonMidnight
 
 @MainActor
 final class GameContainer: ObservableObject {
-    let scoreManager = ScoreManager()
-    let gameStateManager = GameStateManager.shared
+    let scoreManager = Score()
+    let gameStateManager = GameState.shared
     let scene: GameScene
     private var cancellable: AnyCancellable?
 
@@ -326,7 +326,7 @@ private struct GameOverOverlay: View {
                         accentColor: Color(red: 0.0, green: 0.6, blue: 1.0),
                         glowColor:   Color(red: 0.0, green: 1.0, blue: 1.0)
                     ) {
-                        GameStateManager.shared.clearState()
+                        GameState.shared.clearState()
                         playAgain()
                     }
 

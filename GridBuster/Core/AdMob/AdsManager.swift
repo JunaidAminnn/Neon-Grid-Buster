@@ -1,8 +1,7 @@
 import SwiftUI
-// import GoogleMobileAds
-// import UserMessagingPlatform
 import AppTrackingTransparency
 import Combine
+import GoogleMobileAds
 
 // MARK: - AdUnitIDs
 struct AdUnitIDs {
@@ -127,6 +126,10 @@ class AdsManager: NSObject, ObservableObject {
                 self.loadRewardedAd()
             }
         }
+    }
+    
+    func initialize() {
+        initializeAdsIfNeeded()
     }
     
     // MARK: - Privacy Flow

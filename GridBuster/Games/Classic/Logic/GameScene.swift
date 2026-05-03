@@ -10,8 +10,8 @@ import UIKit
 final class GameScene: SKScene {
     private let grid = GridManager()
     private let generator = BlockGenerator()
-    private let scoreManager: ScoreManager
-    private let gameStateManager: GameStateManager
+    private let scoreManager: Score
+    private let gameStateManager: GameState
 
     private let gridLayer = SKNode()
     private let placedLayer = SKNode()
@@ -68,7 +68,7 @@ final class GameScene: SKScene {
     /// Optional adventure-level pre-fill (nil = normal free-play).
     private var adventurePreset: [[NeonColor?]]?
 
-    init(scoreManager: ScoreManager, gameStateManager: GameStateManager, adventurePreset: [[NeonColor?]]? = nil) {
+    init(scoreManager: Score, gameStateManager: GameState, adventurePreset: [[NeonColor?]]? = nil) {
         self.scoreManager    = scoreManager
         self.gameStateManager = gameStateManager
         self.adventurePreset = adventurePreset

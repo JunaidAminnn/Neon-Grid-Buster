@@ -6,6 +6,7 @@
 import Combine
 import Foundation
 import SwiftUI
+import Combine
 
 // MARK: - SavedGameState
 struct SavedGameState: Codable {
@@ -18,9 +19,9 @@ struct SavedGameState: Codable {
     var trayColors: [String?]   // NeonColor string representation or nil
 }
 
-// MARK: - GameStateManager
-final class GameStateManager: ObservableObject {
-    static let shared = GameStateManager()
+// MARK: - GameState
+final class GameState: ObservableObject {
+    static let shared = GameState()
     private let saveKey = "savedClassicState"
 
     @Published private(set) var savedState: SavedGameState?

@@ -43,7 +43,7 @@ final class AdventureGameEngine: ObservableObject {
     /// Current score (cell-fill + line-clear points — same formula as Classic).
     @Published private(set) var score: Int = 0
 
-    /// Convenience: combo streak. Mirrors ScoreManager's concept.
+    /// Convenience: combo streak. Mirrors Score's concept.
     @Published private(set) var combo: Int = 0
 
     // ── Grid & Generator ──────────────────────────────────────────────────
@@ -202,7 +202,7 @@ final class AdventureGameEngine: ObservableObject {
             }
         }
 
-        // 4. Update combo counter (same grace-period logic as Classic ScoreManager)
+        // 4. Update combo counter (same grace-period logic as Classic Score)
         let totalLines = cleared.clearedRows.count + cleared.clearedCols.count
         if totalLines > 0 {
             combo = (combo > 0) ? combo + 1 : 1
@@ -221,7 +221,7 @@ final class AdventureGameEngine: ObservableObject {
         // 5. Score
         let cellPoints  = placed.count * 2
         let comboMult   = totalLines > 0 ? combo : 1
-        let linePoints  = ScoreManager.lineScore(for: totalLines) * comboMult
+        let linePoints  = Score.lineScore(for: totalLines) * comboMult
         let boardBonus  = cleared.isBoardClear ? 10_000 : 0
         score += cellPoints + linePoints + boardBonus
 
