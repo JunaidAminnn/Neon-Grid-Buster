@@ -17,33 +17,27 @@ struct MoreGamesView: View {
             MenuBackground(pulse: glowPulse)
             
             VStack(spacing: 0) {
-                // Custom Header
+                // Vibrant Header
                 HStack {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 20, weight: .black))
+                            .font(.system(size: 22, weight: .black))
                             .foregroundStyle(.white)
                             .padding(12)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.1))
+                                    .fill(Color.white.opacity(0.12))
                                     .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
                             )
                     }
                     
                     Spacer()
                     
-                    VStack(spacing: 2) {
-                        Text("GAMES HUB")
-                            .font(.system(size: 12, weight: .black, design: .rounded))
-                            .foregroundStyle(Theme.Palette.neonCyan)
-                            .tracking(8)
-                        
-                        Text("MORE GAMES")
-                            .font(.system(size: 32, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                            .shadow(color: Theme.Palette.neonCyan, radius: 15)
-                    }
+                    Text("MORE GAMES")
+                        .font(.system(size: 32, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: Theme.Palette.neonCyan, radius: 10)
+                        .shadow(color: Theme.Palette.neonCyan, radius: 20)
                     
                     Spacer()
                     
@@ -51,42 +45,39 @@ struct MoreGamesView: View {
                     Circle().fill(Color.clear).frame(width: 44, height: 44)
                 }
                 .padding(.horizontal)
-                .padding(.top, 10)
-                .padding(.bottom, 30)
+                .padding(.top, 15)
+                .padding(.bottom, 25)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 30) {
+                    VStack(spacing: 25) {
                         // Tic-Tac-Toe Card (Functional)
                         NavigationLink(destination: TicTacToeView()) {
                             GameCard(
                                 title: "TIC-TAC-TOE",
                                 subtitle: "NEON BATTLE",
                                 imageName: "tic_tac_toe_card",
-                                glowColor: Theme.Palette.neonCyan,
-                                isAvailable: true
+                                glowColor: Theme.Palette.neonCyan
                             )
                         }
                         
-                        // Snake Card (Placeholder)
+                        // Snake Card
                         GameCard(
                             title: "NEON SNAKE",
-                            subtitle: "COMING SOON",
+                            subtitle: "VIBRANT SLITHER",
                             imageName: "snake_game_card",
-                            glowColor: Theme.Palette.neonLime,
-                            isAvailable: false
+                            glowColor: Theme.Palette.neonLime
                         )
                         
-                        // Arrow Escape Card (Placeholder)
+                        // Arrow Escape Card
                         GameCard(
                             title: "ARROW ESCAPE",
-                            subtitle: "COMING SOON",
+                            subtitle: "SPEED RUN",
                             imageName: "arrow_escape_card",
-                            glowColor: Theme.Palette.neonOrange,
-                            isAvailable: false
+                            glowColor: Theme.Palette.neonOrange
                         )
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 60)
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 50)
                 }
             }
         }
@@ -102,99 +93,59 @@ struct GameCard: View {
     let subtitle: String
     let imageName: String
     let glowColor: Color
-    let isAvailable: Bool
-    
-    @State private var pulse = false
-    @State private var angle: Double = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Image Section
+            // High-Contrast Image Section
             ZStack {
                 Image(imageName)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: 200)
+                    .frame(height: 190)
                     .clipped()
-                    .grayscale(isAvailable ? 0 : 0.6)
-                    .brightness(isAvailable ? 0 : -0.1)
                 
-                // Subtle gradient overlay
+                // Vibrant gradient overlay
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
+                    colors: [.clear, .black.opacity(0.7)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                
-                if !isAvailable {
-                    VStack {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(.white.opacity(0.5))
-                            .shadow(color: glowColor, radius: 10)
-                    }
-                }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             
             // Text Section
             VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(title)
-                        .font(.system(size: 24, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                    
-                    Spacer()
-                    
-                    if isAvailable {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white)
-                            .padding(8)
-                            .background(Circle().fill(glowColor.opacity(0.8)))
-                            .shadow(color: glowColor, radius: 10)
-                    }
-                }
+                Text(title)
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
                 
                 Text(subtitle)
                     .font(.system(size: 14, weight: .black, design: .rounded))
-                    .foregroundStyle(isAvailable ? glowColor : Color.gray)
+                    .foregroundStyle(Color.white.opacity(0.8)) // Brighter gray/white
                     .tracking(3)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 18)
         }
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-                .blur(radius: 0.5)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color.white.opacity(0.08))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(
                     LinearGradient(
-                        colors: [
-                            glowColor.opacity(isAvailable ? 0.7 : 0.3),
-                            glowColor.opacity(0.1),
-                            glowColor.opacity(isAvailable ? 0.5 : 0.2)
-                        ],
+                        colors: [glowColor.opacity(0.8), glowColor.opacity(0.2)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 2
                 )
         )
-        .shadow(color: glowColor.opacity(isAvailable ? (pulse ? 0.4 : 0.2) : 0.1), radius: pulse ? 20 : 15, x: 0, y: 5)
-        .scaleEffect(pulse && isAvailable ? 1.02 : 1.0)
-        .onAppear {
-            if isAvailable {
-                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                    pulse = true
-                }
-            }
-        }
+        .shadow(color: glowColor.opacity(0.35), radius: 15, x: 0, y: 8)
     }
 }
+
 
 
 // Reuse background from MainMenu for consistency
