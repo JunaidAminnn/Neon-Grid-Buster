@@ -36,8 +36,8 @@ struct MoreGamesView: View {
                     Text("MORE GAMES")
                         .font(.system(size: 32, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                        .shadow(color: Theme.Palette.neonCyan, radius: 10)
-                        .shadow(color: Theme.Palette.neonCyan, radius: 20)
+                        .shadow(color: Theme.Palette.neonCyan.opacity(0.8), radius: 10)
+                        .shadow(color: Theme.Palette.neonBlue.opacity(0.6), radius: 20)
                     
                     Spacer()
                     

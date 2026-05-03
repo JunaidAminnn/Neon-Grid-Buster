@@ -45,45 +45,34 @@ struct TicTacToeView: View {
             // Background
             MenuBackground(pulse: glowPulse)
             
-            VStack(spacing: 25) {
-                // Header
-                HStack {
+            VStack(spacing: 20) {
+                // Refined Header (Single Line)
+                HStack(alignment: .center) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 22, weight: .black))
+                            .font(.system(size: 20, weight: .black))
                             .foregroundStyle(.white)
-                            .padding(14)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.12))
-                                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                            )
+                            .padding(12)
+                            .background(Circle().fill(Color.white.opacity(0.12)))
                     }
                     
                     Spacer()
                     
-                    VStack(spacing: -4) {
-                        NeonText(text: "TIC TAC", color: Theme.Palette.neonCyan, size: 32)
-                        NeonText(text: "TOE", color: Theme.Palette.neonPink, size: 44)
-                    }
-                    .offset(y: titleOffset)
+                    NeonText(text: "TIC TAC TOE", color: Theme.Palette.neonCyan, size: 28)
+                        .offset(y: titleOffset)
                     
                     Spacer()
                     
                     Button(action: { withAnimation { showSetup = true } }) {
                         Image(systemName: "person.2.badge.gearshape.fill")
-                            .font(.system(size: 20, weight: .black))
+                            .font(.system(size: 18, weight: .black))
                             .foregroundStyle(.white)
-                            .padding(14)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.12))
-                                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                            )
+                            .padding(12)
+                            .background(Circle().fill(Color.white.opacity(0.12)))
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 10)
+                .padding(.top, 5)
                 
                 // Status Bar
                 StatusIndicator(text: statusText, color: currentTurnColor)
@@ -95,7 +84,7 @@ struct TicTacToeView: View {
                         .shadow(color: boardGlowColor.opacity(0.4), radius: 40)
                         .overlay(RoundedRectangle(cornerRadius: 32).stroke(boardGlowColor.opacity(0.3), lineWidth: 2))
                     
-                    LazyVGrid(columns: columns, spacing: 20) {
+                    LazyVGrid(columns: columns, spacing: 15) {
                         ForEach(0..<9) { index in
                             NeonCell(
                                 value: board[index],
@@ -107,10 +96,10 @@ struct TicTacToeView: View {
                             )
                         }
                     }
-                    .padding(25)
+                    .padding(20)
                 }
                 .padding(.horizontal, 20)
-                .frame(maxWidth: 450)
+                .frame(maxWidth: 420)
                 
                 Spacer()
             }
@@ -231,40 +220,33 @@ struct SetupOverlay: View {
         ZStack {
             Color.black.opacity(0.96).ignoresSafeArea()
             
-            VStack(spacing: 35) {
-                VStack(spacing: 8) {
-                    Text("NEON COMMAND")
-                        .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(p1Color)
-                        .tracking(10)
-                    
-                    Text("PRE-GAME SETUP")
-                        .font(.system(size: 32, weight: .black, design: .rounded))
-                        .foregroundStyle(.white) // Ensure white text
-                        .shadow(color: p1Color.opacity(0.6), radius: 15)
-                }
+            VStack(spacing: 25) {
+                Text("MATCH SETUP")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: p1Color.opacity(0.6), radius: 15)
                 
-                VStack(spacing: 30) {
-                    SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", colors: colors)
-                    SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", colors: colors)
+                VStack(spacing: 20) {
+                    SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", placeholder: "Enter Player 1 Name", colors: colors)
+                    SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", placeholder: "Enter Player 2 Name", colors: colors)
                 }
                 .padding(.horizontal, 25)
                 
                 Button(action: onStart) {
                     Text("LAUNCH BATTLE")
-                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .font(.system(size: 20, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 22)
+                        .padding(.vertical, 20)
                         .background(
-                            RoundedRectangle(cornerRadius: 24)
+                            RoundedRectangle(cornerRadius: 20)
                                 .fill(p1Color.opacity(0.2))
-                                .overlay(RoundedRectangle(cornerRadius: 24).stroke(LinearGradient(colors: [p1Color, p2Color], startPoint: .leading, endPoint: .trailing), lineWidth: 3))
+                                .overlay(RoundedRectangle(cornerRadius: 20).stroke(LinearGradient(colors: [p1Color, p2Color], startPoint: .leading, endPoint: .trailing), lineWidth: 3))
                         )
                 }
                 .padding(.horizontal, 25)
             }
-            .padding(.vertical, 40)
+            .padding(.vertical, 30)
             .background(RoundedRectangle(cornerRadius: 40).fill(Color.white.opacity(0.05)))
             .padding(.horizontal, 20)
         }
@@ -275,28 +257,29 @@ struct SetupSection: View {
     @Binding var name: String
     @Binding var selectedColor: Color
     let label: String
+    let placeholder: String
     let colors: [Color]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 15) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(label)
-                .font(.system(size: 14, weight: .black, design: .rounded))
+                .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(selectedColor)
-                .tracking(3)
+                .tracking(2)
             
-            TextField("Commander Name", text: $name)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .padding(18)
+            TextField(placeholder, text: $name)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .padding(15)
                 .background(Color.white.opacity(0.12)) // Brighter background
-                .cornerRadius(18)
+                .cornerRadius(15)
                 .foregroundStyle(.white) // Ensure white text
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(selectedColor.opacity(0.6), lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 15).stroke(selectedColor.opacity(0.6), lineWidth: 2))
             
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 ForEach(colors, id: \.self) { color in
                     Circle()
                         .fill(color)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .overlay(Circle().stroke(Color.white, lineWidth: selectedColor == color ? 3 : 0))
                         .onTapGesture { withAnimation { selectedColor = color } }
                 }
@@ -316,47 +299,59 @@ struct VictoryOverlay: View {
         ZStack {
             Color.black.opacity(0.96).ignoresSafeArea()
             
-            VStack(spacing: 40) {
-                VStack(spacing: 15) {
+            VStack(spacing: 35) {
+                VStack(spacing: 12) {
                     Text(isDraw ? "STALEMATE" : "VICTORY")
-                        .font(.system(size: 54, weight: .black, design: .rounded))
+                        .font(.system(size: 14, weight: .black, design: .rounded))
+                        .foregroundStyle(winnerColor)
+                        .tracking(10)
+                    
+                    Text(isDraw ? "NO ONE WON" : "\(winnerName.uppercased())")
+                        .font(.system(size: 32, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                        .shadow(color: winnerColor, radius: 25)
+                        .multilineTextAlignment(.center)
+                        .shadow(color: winnerColor.opacity(0.6), radius: 15)
                     
                     if !isDraw {
-                        Text(winnerName.uppercased())
-                            .font(.system(size: 28, weight: .black, design: .rounded))
+                        Text("VICTORIOUS!")
+                            .font(.system(size: 18, weight: .black, design: .rounded))
                             .foregroundStyle(winnerColor)
-                            .tracking(8)
+                            .tracking(4)
                     }
                 }
-                .padding(.vertical, 40)
+                .padding(.vertical, 30)
                 .frame(maxWidth: .infinity)
                 .background(RoundedRectangle(cornerRadius: 30).fill(Color.white.opacity(0.05)))
-                .padding(.horizontal, 25)
                 
-                VStack(spacing: 20) {
+                VStack(spacing: 18) {
                     Button(action: onRestart) {
                         Text("BATTLE AGAIN")
                             .font(.system(size: 22, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
+                            .padding(.vertical, 22)
                             .background(
                                 RoundedRectangle(cornerRadius: 24)
                                     .fill(winnerColor.opacity(0.2))
                                     .overlay(RoundedRectangle(cornerRadius: 24).stroke(winnerColor, lineWidth: 3))
                             )
+                            .shadow(color: winnerColor.opacity(0.5), radius: 15)
                     }
                     
                     Button(action: onExit) {
                         Text("EXIT TO HUB")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.6))
                     }
                 }
-                .padding(.horizontal, 40)
             }
+            .padding(35)
+            .background(
+                RoundedRectangle(cornerRadius: 40)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 40).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            )
+            .padding(.horizontal, 20)
         }
         .transition(.scale.combined(with: .opacity))
     }
@@ -409,7 +404,7 @@ struct NeonCell: View {
                     .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
             }
-            .frame(height: 110)
+            .frame(height: 100)
         }
         .buttonStyle(PlainButtonStyle())
     }
