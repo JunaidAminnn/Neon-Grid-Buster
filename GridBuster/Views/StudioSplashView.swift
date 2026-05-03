@@ -2,9 +2,6 @@
 //  StudioSplashView.swift
 //  NeonGridBuster
 //
-//  Studio splash — "SHAFEEK STUDIOS" neon logo shown for 2 seconds
-//  before transitioning to the main game title screen.
-//
 
 import SwiftUI
 
@@ -18,6 +15,11 @@ struct StudioSplashView: View {
     /// Controls the logo's fade-in / glow pulse animation.
     @State private var logoVisible  = false
     @State private var glowPulse    = false
+    
+    /// Tracks if the privacy flow (ATT/UMP) is finished.
+    @State private var privacyFlowFinished = false
+    /// Tracks if the minimum splash duration has passed.
+    @State private var splashDurationPassed = false
 
     // MARK: - Body
 
@@ -32,6 +34,12 @@ struct StudioSplashView: View {
             }
         }
         .animation(.easeInOut(duration: 0.55), value: navigateToMenu)
+        .onChange(of: privacyFlowFinished) { _, finished in
+            checkNavigation()
+        }
+        .onChange(of: splashDurationPassed) { _, passed in
+            checkNavigation()
+        }
     }
 
     // MARK: - Splash Content
@@ -41,9 +49,9 @@ struct StudioSplashView: View {
             // ── Background ────────────────────────────────────────────────
             LinearGradient(
                 colors: [
-                    Color(red: 0x0D, green: 0x01, blue: 0x2B),   // deep dark violet  → top
-                    Color(red: 0x06, green: 0x00, blue: 0x12),   // ultra-dark violet → mid
-                    Color(red: 0x00, green: 0x01, blue: 0x05)    // near-black        → bottom
+                    Color(red: 0x0D / 255.0, green: 0x01 / 255.0, blue: 0x2B / 255.0),
+                    Color(red: 0x06 / 255.0, green: 0x00 / 255.0, blue: 0x12 / 255.0),
+                    Color(red: 0x00 / 255.0, green: 0x01 / 255.0, blue: 0x05 / 255.0)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -81,16 +89,29 @@ struct StudioSplashView: View {
             logoVisible = true
             glowPulse   = true
 
-            // ── AdMob Initialization ──────────────────────────────────────
-            // Start the privacy/consent flow as early as possible.
+            // ── AdMob & Privacy Flow ──────────────────────────────────────
+            // Start the privacy/consent flow.
             Task {
+                print("Splash: Starting Privacy Flow (UMP/ATT)...")
                 await AdsManager.shared.runConsentAndTrackingFlowIfNeeded()
+                withAnimation {
+                    print("Splash: Privacy Flow Finished.")
+                    privacyFlowFinished = true
+                }
             }
 
-            // After 1.6 seconds transition to main menu (reduced from 2.0s)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-                navigateToMenu = true
+            // After minimum duration, allow transition if privacy flow is also done.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                print("Splash: Minimum duration passed.")
+                splashDurationPassed = true
             }
+        }
+    }
+    
+    private func checkNavigation() {
+        if privacyFlowFinished && splashDurationPassed {
+            print("Splash: All conditions met. Navigating to menu.")
+            navigateToMenu = true
         }
     }
 

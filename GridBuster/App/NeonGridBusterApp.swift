@@ -12,9 +12,20 @@ import FirebaseCore
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        FirebaseApp.configure()
+        
+        print("Firebase: Starting initialization...")
+        
+        // Check if GoogleService-Info.plist exists
+        if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") {
+            print("Firebase: GoogleService-Info.plist found at \(path)")
+            FirebaseApp.configure()
+            print("Firebase: Configuration successful. App Name: \(FirebaseApp.app()?.name ?? "Unknown")")
+        } else {
+            print("Firebase ERROR: GoogleService-Info.plist MISSING! Firebase will not work.")
+        }
         
         // Initialize AdMob SDK
+        print("AdMob: Initializing via AppDelegate...")
         AdsManager.shared.initialize()
         
         return true

@@ -1,10 +1,9 @@
 import Foundation
-// import UserMessagingPlatform
-// import GoogleMobileAds
+import UserMessagingPlatform
 import UIKit
 import Combine
 
-/// Enum to track user's consent decision for "Pay or Okay" model (if used)
+/// Enum to track user's consent decision
 enum ConsentStatus: String {
     case notDetermined
     case consented
@@ -17,54 +16,80 @@ class ConsentManager: ObservableObject {
     
     @Published var canRequestAds: Bool = false
     @Published var consentGatheringComplete: Bool = false
-    @Published var consentStatus: ConsentStatus = .notDetermined
-    
-    private let consentStatusKey = "user_consent_status"
     
     private init() {
-        loadConsentStatus()
-    }
-    
-    var userConsentedToAds: Bool {
-        return consentStatus == .consented
+        // UMP manages its own persistence, but we track canRequestAds for UI convenience
+        self.canRequestAds = UMPConsentInformation.sharedInstance.canRequestAds
     }
     
     var userDeniedConsent: Bool {
-        return consentStatus == .denied
+        // In UMP, we check if we can request ads. If not, it could be denied or not yet gathered.
+        return consentGatheringComplete && !UMPConsentInformation.sharedInstance.canRequestAds
     }
     
-    func requestConsent(from viewController: UIViewController? = nil, completion: @escaping (ConsentStatus) -> Void) {
-        #if DEBUG
-        print("AdMob: Consent requested (MOCKED)")
-        #endif
+    func requestConsent(from viewController: UIViewController? = nil, completion: @escaping (String) -> Void) {
+        let parameters = UMPRequestParameters()
         
-        // Mocking successful consent info update and form presentation
-        DispatchQueue.main.async {
-            self.canRequestAds = true
-            self.consentStatus = .consented
-            self.saveConsentStatus()
-            self.consentGatheringComplete = true
-            completion(.consented)
+        // For testing in non-EU regions, you can use debug settings:
+        /*
+        let debugSettings = UMPDebugSettings()
+        debugSettings.geography = .EEA
+        debugSettings.testDeviceIdentifiers = ["YOUR_TEST_DEVICE_ID"]
+        parameters.debugSettings = debugSettings
+        */
+        
+        // tagForUnderAgeOfConsent is handled by UMP automatically or via different params in newer SDKs
+        
+        print("UMP: Requesting consent info update...")
+        UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: parameters) { [weak self] error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("UMP: Error updating consent info: \(error.localizedDescription)")
+                completion("Error: \(error.localizedDescription)")
+                return
+            }
+            
+            print("UMP: Consent info updated.")
+            
+            UMPConsentForm.loadAndPresentIfRequired(from: viewController ?? self.getTopViewController()) { [weak self] error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("UMP: Error loading/presenting form: \(error.localizedDescription)")
+                }
+                
+                self.canRequestAds = UMPConsentInformation.sharedInstance.canRequestAds
+                self.consentGatheringComplete = true
+                
+                print("UMP: Flow complete. Can request ads: \(self.canRequestAds)")
+                completion(self.canRequestAds ? "Consented/NotRequired" : "Denied/Restricted")
+            }
         }
     }
     
-    private func saveConsentStatus() {
-        UserDefaults.standard.set(consentStatus.rawValue, forKey: consentStatusKey)
-    }
-    
-    private func loadConsentStatus() {
-        if let savedStatus = UserDefaults.standard.string(forKey: consentStatusKey),
-           let status = ConsentStatus(rawValue: savedStatus) {
-            self.consentStatus = status
+    private func getTopViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = windowScene.windows.first?.rootViewController else {
+            return nil
         }
+        
+        func findTop(from base: UIViewController?) -> UIViewController? {
+            if let nav = base as? UINavigationController { return findTop(from: nav.visibleViewController) }
+            if let tab = base as? UITabBarController { return findTop(from: tab.selectedViewController) }
+            if let presented = base?.presentedViewController { return findTop(from: presented) }
+            return base
+        }
+        
+        return findTop(from: root)
     }
     
     #if DEBUG
     func resetConsent() {
-        consentStatus = .notDetermined
+        UMPConsentInformation.sharedInstance.reset()
         canRequestAds = false
         consentGatheringComplete = false
-        UserDefaults.standard.removeObject(forKey: consentStatusKey)
+        print("UMP: Consent RESET for debugging.")
     }
     #endif
 }

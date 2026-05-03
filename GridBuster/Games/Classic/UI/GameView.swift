@@ -87,6 +87,7 @@ struct GameView: View {
     @AppStorage("settings.ghostEnabled")   private var ghostEnabled:   Bool = true
 
     @State private var showSettings: Bool = false
+    @State private var navigateToMoreGames: Bool = false
     @State private var scoreScale:   CGFloat = 1.0
 
     init(mode: GameMode, adventurePreset: [[NeonColor?]]? = nil) {
@@ -146,10 +147,14 @@ struct GameView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView(
                 onHome:   { dismiss() },
-                onReplay: { container.scene.startNewGame() }
+                onReplay: { container.scene.startNewGame() },
+                onMoreGames: { navigateToMoreGames = true }
             )
             .presentationBackground(.clear)
             .presentationDetents([.large])
+        }
+        .navigationDestination(isPresented: $navigateToMoreGames) {
+            MoreGamesView()
         }
         .animation(.easeInOut(duration: 0.18), value: container.scoreManager.isGameOver)
     }

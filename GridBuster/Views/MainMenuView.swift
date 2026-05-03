@@ -2,10 +2,6 @@
 //  MainMenuView.swift
 //  NeonGridBuster
 //
-//  Prompt 2.1 — Main Menu UI.
-//  Deep neon gradient background, cyan/pink title, neon-orange Adventure
-//  and neon-pink Classic mode buttons with NavigationStack routing.
-//
 
 import SwiftUI
 
@@ -152,9 +148,9 @@ private struct MenuBackground: View {
             // Base gradient — identical to splash / loading screens
             LinearGradient(
                 colors: [
-                    Color(red: 0x0D, green: 0x01, blue: 0x2B),
-                    Color(red: 0x06, green: 0x00, blue: 0x12),
-                    Color(red: 0x00, green: 0x01, blue: 0x05)
+                    Color(red: 0x0D / 255.0, green: 0x01 / 255.0, blue: 0x2B / 255.0),
+                    Color(red: 0x06 / 255.0, green: 0x00 / 255.0, blue: 0x12 / 255.0),
+                    Color(red: 0x00 / 255.0, green: 0x01 / 255.0, blue: 0x05 / 255.0)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -191,13 +187,14 @@ private struct MenuBackground: View {
 
 // MARK: - MenuNeonWord
 
-/// Neon glowing word for the menu title (mirrors GameTitleLoadingView style).
+/// Neon glowing word for the menu title with a continuous diagonal shine effect.
 private struct MenuNeonWord: View {
     let text: String
     let color: Color
     let fontSize: CGFloat
 
     @State private var pulse = false
+    @State private var shineOffset: CGFloat = -1.2 // Start further left
 
     var body: some View {
         ZStack {
@@ -221,17 +218,52 @@ private struct MenuNeonWord: View {
                 .foregroundStyle(color.opacity(0.55))
                 .blur(radius: 4)
 
-            // Crisp core
+            // Crisp core with Shine Overlay
             Text(text)
                 .font(.system(size: fontSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .shadow(color: color,               radius: 10, x: 0, y: 0)
                 .shadow(color: color.opacity(0.55), radius: 24, x: 0, y: 0)
+                .overlay(
+                    GeometryReader { geo in
+                        // The Silver Shine: A simpler, more visible silver glint
+                        ZStack {
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            .clear,
+                                            .white.opacity(0.3),
+                                            .white.opacity(0.9), // Bright Peak
+                                            .white.opacity(0.3),
+                                            .clear
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: geo.size.width * 0.4) // Narrow shine beam
+                                .rotationEffect(.degrees(20))
+                                .offset(x: -geo.size.width * 0.5 + (shineOffset * geo.size.width * 2.0))
+                        }
+                        .mask(
+                            Text(text)
+                                .font(.system(size: fontSize, weight: .black, design: .rounded))
+                        )
+                    }
+                )
         }
         .fixedSize(horizontal: true, vertical: false)
         .onAppear {
+            // Pulse animation
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
                 pulse = true
+            }
+            
+            // Continuous Silver Shine animation
+            // Reset and loop every 3 seconds for high visibility
+            withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
+                shineOffset = 1.0
             }
         }
     }
@@ -357,10 +389,4 @@ private struct ScaleButtonStyle: ButtonStyle {
                 isPressed = pressed
             }
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    MainMenuView()
 }

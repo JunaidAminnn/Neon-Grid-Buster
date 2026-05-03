@@ -2,8 +2,6 @@
 //  TicTacToeViewModel.swift
 //  NeonGridBuster
 //
-//  Logic and state management for Tic-Tac-Toe.
-//
 
 import SwiftUI
 import Combine
@@ -18,10 +16,10 @@ class TicTacToeViewModel: ObservableObject {
     
     // Player Setup
     @Published var showSetup: Bool = true
-    @Published var player1Name: String = "Player 1"
-    @Published var player2Name: String = "Player 2"
-    @Published var player1Color: Color = Theme.Palette.neonCyan
-    @Published var player2Color: Color = Theme.Palette.neonPink
+    @Published var player1Name: String = ""
+    @Published var player2Name: String = ""
+    @Published var player1Color: Color = Theme.Palette.neonLime
+    @Published var player2Color: Color = Theme.Palette.neonPurple
     
     // Animations Sync
     @Published var winFlash: Bool = false
@@ -33,8 +31,16 @@ class TicTacToeViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     
+    var player1DisplayName: String {
+        player1Name.isEmpty ? "Player 1" : player1Name
+    }
+    
+    var player2DisplayName: String {
+        player2Name.isEmpty ? "Player 2" : player2Name
+    }
+    
     var winnerName: String {
-        if let winner = winner { return winner == "X" ? player1Name : player2Name }
+        if let winner = winner { return winner == "X" ? player1DisplayName : player2DisplayName }
         return "GRID LOCKED"
     }
     
@@ -58,7 +64,7 @@ class TicTacToeViewModel: ObservableObject {
         if let _ = winner { return "\(winnerName.uppercased()) VICTORIOUS!" }
         else if gameOver { return "GRID LOCKED" }
         else { 
-            let name = isXTurn ? (player1Name.isEmpty ? "Player 1" : player1Name) : (player2Name.isEmpty ? "Player 2" : player2Name)
+            let name = isXTurn ? player1DisplayName : player2DisplayName
             return "\(name.uppercased())'S TURN" 
         }
     }

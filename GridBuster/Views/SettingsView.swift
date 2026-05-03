@@ -16,8 +16,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     // ── Callbacks (passed in by host screen) ─────────────────────────────
-    var onHome:   (() -> Void)? = nil
-    var onReplay: (() -> Void)? = nil
+    var onHome:      (() -> Void)? = nil
+    var onReplay:    (() -> Void)? = nil
+    var onMoreGames: (() -> Void)? = nil
 
     // ── Persisted settings ───────────────────────────────────────────────
     @AppStorage("settings.soundEnabled")   private var soundEnabled:   Bool = true
@@ -103,7 +104,10 @@ struct SettingsView: View {
                             buttonTitle: "Open",
                             buttonColor: .green
                         ) {
-                            // Phase N: deep-link to game store / more games
+                            dismiss()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                if let onMoreGames { onMoreGames() }
+                            }
                         }
 
                         SettingsActionRow(

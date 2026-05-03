@@ -83,11 +83,9 @@ struct MoreGamesView: View {
                     .padding(.bottom, 50)
                 }
             }
-            
-            // Hidden Navigation Link
-            NavigationLink(destination: TicTacToeView(), isActive: $navigateToTicTacToe) {
-                EmptyView()
-            }
+        }
+        .navigationDestination(isPresented: $navigateToTicTacToe) {
+            TicTacToeView()
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -141,23 +139,18 @@ struct GameCard: View {
                     
                     Spacer()
                     
-                    // Status Button (Play/Lock)
-                    Button(action: {
-                        if isAvailable { action?() }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(glowColor.opacity(0.2))
-                                .frame(width: 44, height: 44)
-                                .overlay(Circle().stroke(glowColor.opacity(0.6), lineWidth: 2))
-                                .shadow(color: glowColor.opacity(0.5), radius: 10)
-                            
-                            Image(systemName: isAvailable ? "play.fill" : "lock.fill")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
+                    // Status Button UI (Visual only, card handles tap)
+                    ZStack {
+                        Circle()
+                            .fill(glowColor.opacity(0.2))
+                            .frame(width: 44, height: 44)
+                            .overlay(Circle().stroke(glowColor.opacity(0.6), lineWidth: 2))
+                            .shadow(color: glowColor.opacity(0.5), radius: 10)
+                        
+                        Image(systemName: isAvailable ? "play.fill" : "lock.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding(.horizontal, 22)
@@ -179,6 +172,7 @@ struct GameCard: View {
                 )
         )
         .shadow(color: glowColor.opacity(0.35), radius: 15, x: 0, y: 8)
+        .contentShape(Rectangle()) // Ensures entire card area is tappable
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .onTapGesture {
             if isAvailable {

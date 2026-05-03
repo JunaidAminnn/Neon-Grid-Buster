@@ -90,8 +90,6 @@ struct TicTacToeView: View {
                     p2Color: $viewModel.player2Color,
                     colors: viewModel.availableColors,
                     onStart: {
-                        if viewModel.player1Name.trimmingCharacters(in: .whitespaces).isEmpty { viewModel.player1Name = "Player 1" }
-                        if viewModel.player2Name.trimmingCharacters(in: .whitespaces).isEmpty { viewModel.player2Name = "Player 2" }
                         withAnimation(.spring()) {
                             viewModel.showSetup = false
                             viewModel.resetGame()
@@ -142,8 +140,8 @@ struct SetupOverlay: View {
                     .shadow(color: p1Color.opacity(0.6), radius: 15)
                 
                 VStack(spacing: 20) {
-                    SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", placeholder: "Enter Player 1 Name", colors: colors)
-                    SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", placeholder: "Enter Player 2 Name", colors: colors)
+                    SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", colors: colors)
+                    SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", colors: colors)
                 }
                 .padding(.horizontal, 25)
                 
@@ -172,7 +170,6 @@ struct SetupSection: View {
     @Binding var name: String
     @Binding var selectedColor: Color
     let label: String
-    let placeholder: String
     let colors: [Color]
     
     var body: some View {
@@ -182,13 +179,22 @@ struct SetupSection: View {
                 .foregroundStyle(selectedColor)
                 .tracking(2)
             
-            TextField(placeholder, text: $name)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .padding(15)
-                .background(Color.white.opacity(0.12)) // Brighter background
-                .cornerRadius(15)
-                .foregroundStyle(.white) // Ensure white text
-                .overlay(RoundedRectangle(cornerRadius: 15).stroke(selectedColor.opacity(0.6), lineWidth: 2))
+            ZStack(alignment: .leading) {
+                if name.isEmpty {
+                    Text("Enter player name (optional)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.gray.opacity(0.6))
+                        .padding(.leading, 15)
+                }
+                
+                TextField("", text: $name)
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .padding(15)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(15)
+                    .foregroundStyle(.white)
+                    .overlay(RoundedRectangle(cornerRadius: 15).stroke(selectedColor.opacity(0.6), lineWidth: 2))
+            }
             
             HStack(spacing: 12) {
                 ForEach(colors, id: \.self) { color in
@@ -355,7 +361,3 @@ private struct MenuBackground: View {
         .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulse)
     }
 }
-
-
-
-
