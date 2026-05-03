@@ -10,6 +10,7 @@ import SwiftUI
 struct MoreGamesView: View {
     @Environment(\.dismiss) var dismiss
     @State private var glowPulse = false
+    @State private var navigateToTicTacToe = false
     
     var body: some View {
         ZStack {
@@ -34,7 +35,7 @@ struct MoreGamesView: View {
                     Spacer()
                     
                     Text("MORE GAMES")
-                        .font(.system(size: 32, weight: .black, design: .rounded))
+                        .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: Theme.Palette.neonCyan.opacity(0.8), radius: 10)
                         .shadow(color: Theme.Palette.neonBlue.opacity(0.6), radius: 20)
@@ -51,15 +52,14 @@ struct MoreGamesView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 25) {
                         // Tic-Tac-Toe Card (Functional)
-                        NavigationLink(destination: TicTacToeView()) {
-                            GameCard(
-                                title: "TIC-TAC-TOE",
-                                subtitle: "NEON BATTLE",
-                                imageName: "tic_tac_toe_card",
-                                glowColor: Theme.Palette.neonCyan,
-                                isAvailable: true
-                            )
-                        }
+                        GameCard(
+                            title: "TIC-TAC-TOE",
+                            subtitle: "NEON BATTLE",
+                            imageName: "tic_tac_toe_card",
+                            glowColor: Theme.Palette.neonCyan,
+                            isAvailable: true,
+                            action: { navigateToTicTacToe = true }
+                        )
                         
                         // Snake Card
                         GameCard(
@@ -83,6 +83,11 @@ struct MoreGamesView: View {
                     .padding(.bottom, 50)
                 }
             }
+            
+            // Hidden Navigation Link
+            NavigationLink(destination: TicTacToeView(), isActive: $navigateToTicTacToe) {
+                EmptyView()
+            }
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -97,6 +102,9 @@ struct GameCard: View {
     let imageName: String
     let glowColor: Color
     let isAvailable: Bool
+    var action: (() -> Void)? = nil
+    
+    @State private var isPressed = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -134,17 +142,22 @@ struct GameCard: View {
                     Spacer()
                     
                     // Status Button (Play/Lock)
-                    ZStack {
-                        Circle()
-                            .fill(glowColor.opacity(0.2))
-                            .frame(width: 44, height: 44)
-                            .overlay(Circle().stroke(glowColor.opacity(0.6), lineWidth: 2))
-                            .shadow(color: glowColor.opacity(0.5), radius: 10)
-                        
-                        Image(systemName: isAvailable ? "play.fill" : "lock.fill")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.white)
+                    Button(action: {
+                        if isAvailable { action?() }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(glowColor.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                                .overlay(Circle().stroke(glowColor.opacity(0.6), lineWidth: 2))
+                                .shadow(color: glowColor.opacity(0.5), radius: 10)
+                            
+                            Image(systemName: isAvailable ? "play.fill" : "lock.fill")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding(.horizontal, 22)
@@ -166,6 +179,20 @@ struct GameCard: View {
                 )
         )
         .shadow(color: glowColor.opacity(0.35), radius: 15, x: 0, y: 8)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .onTapGesture {
+            if isAvailable {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    isPressed = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation {
+                        isPressed = false
+                    }
+                    action?()
+                }
+            }
+        }
     }
 }
 
