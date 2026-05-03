@@ -21,11 +21,22 @@ struct TicTacToeView: View {
     @State private var showSetup: Bool = true
     @State private var player1Name: String = ""
     @State private var player2Name: String = ""
+    @State private var player1Color: Color = Theme.Palette.neonCyan
+    @State private var player2Color: Color = Theme.Palette.neonPink
     
     // Animations
     @State private var glowPulse: Bool = false
     @State private var titleOffset: CGFloat = -20
     @State private var winFlash: Bool = false
+    
+    let availableColors: [Color] = [
+        Theme.Palette.neonCyan,
+        Theme.Palette.neonPink,
+        Theme.Palette.neonLime,
+        Theme.Palette.neonYellow,
+        Theme.Palette.neonOrange,
+        Theme.Palette.neonPurple
+    ]
     
     let columns = Array(repeating: GridItem(.flexible(), spacing: 15), count: 3)
     
@@ -60,21 +71,31 @@ struct TicTacToeView: View {
                     
                     Spacer()
                     
-                    // Center spacing balance
-                    Circle().fill(Color.clear).frame(width: 50, height: 50)
+                    // Reset / Setup trigger
+                    Button(action: { withAnimation { showSetup = true } }) {
+                        Image(systemName: "person.2.badge.gearshape.fill")
+                            .font(.system(size: 20, weight: .black))
+                            .foregroundStyle(.white)
+                            .padding(14)
+                            .background(
+                                Circle()
+                                    .fill(Color.white.opacity(0.12))
+                                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                            )
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 10)
                 
                 // Status Bar
-                StatusIndicator(text: statusText, isX: isXTurn, gameOver: gameOver)
+                StatusIndicator(text: statusText, color: currentTurnColor)
                 
                 // Game Board
                 ZStack {
                     // Outer glow for the board
                     RoundedRectangle(cornerRadius: 30)
                         .fill(Color.black.opacity(0.4))
-                        .shadow(color: (winner == "X" ? Theme.Palette.neonCyan : (winner == "O" ? Theme.Palette.neonPink : Color.white)).opacity(0.25), radius: 30)
+                        .shadow(color: boardGlowColor.opacity(0.25), radius: 30)
                     
                     LazyVGrid(columns: columns, spacing: 18) {
                         ForEach(0..<9) { index in
@@ -82,6 +103,8 @@ struct TicTacToeView: View {
                                 value: board[index],
                                 isWinningCell: winIndices.contains(index),
                                 winFlash: winFlash,
+                                xColor: player1Color,
+                                oColor: player2Color,
                                 action: { makeMove(at: index) }
                             )
                         }
@@ -91,74 +114,37 @@ struct TicTacToeView: View {
                 .padding(.horizontal, 20)
                 .frame(maxWidth: 450)
                 
-                // Reset Button
-                if gameOver {
-                    Button(action: resetGame) {
-                        HStack {
-                            Image(systemName: "arrow.counterclockwise")
-                            Text("REPLAY")
-                        }
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 50)
-                        .padding(.vertical, 18)
-                        .background(
-                            Capsule()
-                                .fill(Color.black.opacity(0.5))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(LinearGradient(colors: [Theme.Palette.neonCyan, Theme.Palette.neonPink], startPoint: .leading, endPoint: .trailing), lineWidth: 3)
-                                )
-                        )
-                        .shadow(color: (isXTurn ? Theme.Palette.neonCyan : Theme.Palette.neonPink).opacity(0.6), radius: 15)
-                    }
-                    .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
-                }
-                
                 Spacer()
             }
             
             // Player Setup Overlay
             if showSetup {
-                ZStack {
-                    Color.black.opacity(0.85).ignoresSafeArea()
-                        .blur(radius: 10)
-                    
-                    VStack(spacing: 30) {
-                        Text("PRE-GAME SETUP")
-                            .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundStyle(.white)
-                            .tracking(4)
-                        
-                        VStack(spacing: 20) {
-                            NameInputField(name: $player1Name, label: "PLAYER 1 (X)", color: Theme.Palette.neonCyan)
-                            NameInputField(name: $player2Name, label: "PLAYER 2 (O)", color: Theme.Palette.neonPink)
+                SetupOverlay(
+                    p1Name: $player1Name,
+                    p2Name: $player2Name,
+                    p1Color: $player1Color,
+                    p2Color: $player2Color,
+                    colors: availableColors,
+                    onStart: {
+                        if player1Name.isEmpty { player1Name = "Player 1" }
+                        if player2Name.isEmpty { player2Name = "Player 2" }
+                        withAnimation(.spring()) {
+                            showSetup = false
+                            resetGame()
                         }
-                        .padding(.horizontal, 30)
-                        
-                        Button(action: {
-                            if player1Name.isEmpty { player1Name = "Player 1" }
-                            if player2Name.isEmpty { player2Name = "Player 2" }
-                            withAnimation(.spring()) {
-                                showSetup = false
-                            }
-                        }) {
-                            Text("START MATCH")
-                                .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 60)
-                                .padding(.vertical, 18)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Theme.Palette.neonCyan.opacity(0.2))
-                                        .overlay(RoundedRectangle(cornerRadius: 15).stroke(Theme.Palette.neonCyan, lineWidth: 2))
-                                )
-                                .shadow(color: Theme.Palette.neonCyan.opacity(0.5), radius: 15)
-                        }
-                        .padding(.top, 10)
                     }
-                }
-                .transition(.opacity)
+                )
+            }
+            
+            // Victory Overlay
+            if gameOver {
+                VictoryOverlay(
+                    winnerName: winnerName,
+                    winnerColor: winnerColor,
+                    isDraw: winner == nil,
+                    onRestart: resetGame,
+                    onExit: { dismiss() }
+                )
             }
         }
         .navigationBarHidden(true)
@@ -172,9 +158,34 @@ struct TicTacToeView: View {
     
     // MARK: - Logic
     
-    var statusText: String {
+    var winnerName: String {
         if let winner = winner {
-            let winnerName = winner == "X" ? player1Name : player2Name
+            return winner == "X" ? player1Name : player2Name
+        }
+        return "STALEMATE"
+    }
+    
+    var winnerColor: Color {
+        if let winner = winner {
+            return winner == "X" ? player1Color : player2Color
+        }
+        return .white
+    }
+    
+    var currentTurnColor: Color {
+        if gameOver { return .gray }
+        return isXTurn ? player1Color : player2Color
+    }
+    
+    var boardGlowColor: Color {
+        if let winner = winner {
+            return winner == "X" ? player1Color : player2Color
+        }
+        return .white
+    }
+    
+    var statusText: String {
+        if let _ = winner {
             return "\(winnerName.uppercased()) VICTORIOUS!"
         } else if gameOver {
             return "STALEMATE"
@@ -214,7 +225,9 @@ struct TicTacToeView: View {
         }
         
         if !board.contains("") {
-            gameOver = true
+            withAnimation {
+                gameOver = true
+            }
         }
     }
     
@@ -236,31 +249,153 @@ struct TicTacToeView: View {
     }
 }
 
-// MARK: - Subviews
+// MARK: - Refined Components
 
-struct NameInputField: View {
-    @Binding var name: String
-    let label: String
-    let color: Color
+struct SetupOverlay: View {
+    @Binding var p1Name: String
+    @Binding var p2Name: String
+    @Binding var p1Color: Color
+    @Binding var p2Color: Color
+    let colors: [Color]
+    let onStart: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(label)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(color)
-                .tracking(2)
+        ZStack {
+            Color.black.opacity(0.9).ignoresSafeArea()
+                .blur(radius: 10)
             
-            TextField("Enter name", text: $name)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                .padding()
-                .background(Color.white.opacity(0.08))
-                .cornerRadius(12)
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(color.opacity(0.3), lineWidth: 1))
-                .foregroundStyle(.white)
-                .accentColor(color)
+            VStack(spacing: 30) {
+                Text("NEON SETUP")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .tracking(6)
+                    .shadow(color: p1Color.opacity(0.5), radius: 10)
+                
+                VStack(spacing: 25) {
+                    SetupSection(name: $p1Name, selectedColor: $p1Color, label: "PLAYER 1 (X)", colors: colors)
+                    SetupSection(name: $p2Name, selectedColor: $p2Color, label: "PLAYER 2 (O)", colors: colors)
+                }
+                .padding(.horizontal, 25)
+                
+                Button(action: onStart) {
+                    Text("LAUNCH BATTLE")
+                        .font(.system(size: 20, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 18)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(p1Color.opacity(0.15))
+                                .overlay(RoundedRectangle(cornerRadius: 20).stroke(LinearGradient(colors: [p1Color, p2Color], startPoint: .leading, endPoint: .trailing), lineWidth: 3))
+                        )
+                        .shadow(color: p1Color.opacity(0.4), radius: 15)
+                }
+                .padding(.top, 10)
+            }
+            .padding(30)
+            .background(
+                RoundedRectangle(cornerRadius: 35)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 35).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            )
+            .padding(.horizontal, 20)
         }
     }
 }
+
+struct SetupSection: View {
+    @Binding var name: String
+    @Binding var selectedColor: Color
+    let label: String
+    let colors: [Color]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(label)
+                .font(.system(size: 14, weight: .black, design: .rounded))
+                .foregroundStyle(selectedColor)
+                .tracking(2)
+            
+            TextField("Commander Name", text: $name)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .padding()
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(15)
+                .overlay(RoundedRectangle(cornerRadius: 15).stroke(selectedColor.opacity(0.4), lineWidth: 2))
+                .foregroundStyle(.white)
+            
+            HStack(spacing: 12) {
+                ForEach(colors, id: \.self) { color in
+                    Circle()
+                        .fill(color)
+                        .frame(width: 28, height: 28)
+                        .overlay(Circle().stroke(Color.white, lineWidth: selectedColor == color ? 3 : 0))
+                        .shadow(color: color.opacity(0.6), radius: 5)
+                        .onTapGesture {
+                            withAnimation(.spring()) { selectedColor = color }
+                        }
+                }
+            }
+            .padding(.top, 4)
+        }
+    }
+}
+
+struct VictoryOverlay: View {
+    let winnerName: String
+    let winnerColor: Color
+    let isDraw: Bool
+    let onRestart: () -> Void
+    let onExit: () -> Void
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.85).ignoresSafeArea()
+            
+            VStack(spacing: 40) {
+                VStack(spacing: 10) {
+                    Text(isDraw ? "STALEMATE" : "VICTORY")
+                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: winnerColor, radius: 20)
+                    
+                    if !isDraw {
+                        Text(winnerName.uppercased())
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundStyle(winnerColor)
+                            .tracking(8)
+                    }
+                }
+                
+                VStack(spacing: 18) {
+                    Button(action: onRestart) {
+                        Text("BATTLE AGAIN")
+                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(winnerColor.opacity(0.2))
+                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(winnerColor, lineWidth: 3))
+                            )
+                            .shadow(color: winnerColor.opacity(0.5), radius: 15)
+                    }
+                    
+                    Button(action: onExit) {
+                        Text("EXIT TO HUB")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+                .padding(.horizontal, 40)
+            }
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+}
+
+// MARK: - Subviews
 
 struct NeonText: View {
     let text: String
@@ -286,15 +421,14 @@ struct NeonText: View {
 
 struct StatusIndicator: View {
     let text: String
-    let isX: Bool
-    let gameOver: Bool
+    let color: Color
     
     var body: some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(gameOver ? Color.gray : (isX ? Theme.Palette.neonCyan : Theme.Palette.neonPink))
-                .frame(width: 8, height: 8)
-                .shadow(color: (isX ? Theme.Palette.neonCyan : Theme.Palette.neonPink), radius: 5)
+                .fill(color)
+                .frame(width: 10, height: 10)
+                .shadow(color: color, radius: 5)
             
             Text(text)
                 .font(.system(size: 16, weight: .black, design: .rounded))
@@ -302,8 +436,13 @@ struct StatusIndicator: View {
                 .tracking(3)
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .background(Capsule().fill(Color.white.opacity(0.08)))
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.08))
+                .overlay(Capsule().stroke(color.opacity(0.3), lineWidth: 1))
+        )
+        .shadow(color: color.opacity(0.2), radius: 10)
     }
 }
 
@@ -311,6 +450,8 @@ struct NeonCell: View {
     let value: String
     let isWinningCell: Bool
     let winFlash: Bool
+    let xColor: Color
+    let oColor: Color
     let action: () -> Void
     
     var body: some View {
@@ -353,7 +494,7 @@ struct NeonCell: View {
     }
     
     var cellColor: Color {
-        value == "X" ? Theme.Palette.neonCyan : Theme.Palette.neonPink
+        value == "X" ? xColor : oColor
     }
 }
 
@@ -391,4 +532,5 @@ private struct MenuBackground: View {
         .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulse)
     }
 }
+
 
