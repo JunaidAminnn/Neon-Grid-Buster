@@ -6,9 +6,10 @@
 build/
 DerivedData/
 
-## Root-level config (Firebase)
+## Root-level config (Firebase & App Settings)
 GoogleService-Info.plist
 GridBuster/Core/Firebase/GoogleService-Info.plist
+NeonGridBusterInfo.plist
 
 ## Xcode-specific
 *.pbxuser
