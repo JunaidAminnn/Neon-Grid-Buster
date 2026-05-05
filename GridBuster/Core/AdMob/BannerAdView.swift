@@ -1,65 +1,75 @@
 import SwiftUI
-// import GoogleMobileAds
+import GoogleMobileAds
+import Combine
 
 struct BannerAdView: View {
     let adUnitID: String
-    @State private var isAdLoaded = false
-    @State private var loadingDots = ""
-    @State private var timer: Timer? = nil
-    
-    @ObservedObject private var adsManager = AdsManager.shared
-    
-    // Standard banner height
-    static let bannerHeight: CGFloat = 60
+    static let bannerHeight: CGFloat = 68
     
     init(adUnitID: String = AdUnitIDs.bannerGlobal) {
         self.adUnitID = adUnitID
     }
+
+    @StateObject private var adsManager = AdsManager.shared
+    @State private var isAdLoaded = false
+    @State private var minimumLoadingTimePassed = false
+    @State private var isAnimating = false
     
     var body: some View {
-        if adsManager.shouldRenderAdViews && adsManager.shouldShowBannersThisSession {
+        ZStack {
+            // Ad container
             ZStack {
-                // Neon-themed loading placeholder
-                if !adsManager.adSDKInitialized || !isAdLoaded {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.white.opacity(0.04))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Palette.neonCyan.opacity(0.35), lineWidth: 1.5)
-                                .overlay(
-                                    HStack(spacing: 4) {
-                                        Text("NEON AD LOADING\(loadingDots)")
-                                            .font(.system(size: 13, weight: .black, design: .monospaced))
-                                            .foregroundStyle(Theme.Palette.neonCyan.opacity(0.6))
-                                            .tracking(1.5)
-                                    }
-                                )
-                        )
-                        .onAppear {
-                            timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
-                                if loadingDots.count >= 3 {
-                                    loadingDots = ""
-                                } else {
-                                    loadingDots += "."
-                                }
-                            }
-                        }
-                        .onDisappear {
-                            timer?.invalidate()
-                            timer = nil
-                        }
-                }
-                
                 // Actual AdMob banner
                 BannerAdRepresentable(
                     adUnitID: adUnitID,
                     isAdLoaded: $isAdLoaded,
                     canLoadAds: adsManager.shouldRenderAdViews
                 )
-                .opacity(isAdLoaded ? 1 : 0.01)
+                .opacity(isAdLoaded && minimumLoadingTimePassed ? 1 : 0.01)
+                
+                // Loading Placeholder
+                if !isAdLoaded || !minimumLoadingTimePassed {
+                    ZStack {
+                        Color.black
+                        
+                        VStack(spacing: 12) {
+                            Text("NEON AD LOADING")
+                                .font(.system(size: 10, weight: .black, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .tracking(2)
+                            
+                            // Premium Spinning Ring
+                            Circle()
+                                .trim(from: 0, to: 0.7)
+                                .stroke(
+                                    AngularGradient(
+                                        colors: [.cyan, .pink, .yellow, .cyan],
+                                        center: .center
+                                    ),
+                                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                                )
+                                .frame(width: 24, height: 24)
+                                .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                                .onAppear {
+                                    withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {
+                                        isAnimating = true
+                                    }
+                                }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
             }
             .frame(height: BannerAdView.bannerHeight)
-            .padding(.horizontal, 16)
+            .onAppear {
+                // Minimum loading time for a premium feel
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        minimumLoadingTimePassed = true
+                    }
+                }
+            }
         }
     }
 }
@@ -107,27 +117,23 @@ fileprivate struct BannerAdRepresentable: UIViewControllerRepresentable {
         guard canLoadAds else { return viewController }
         
         let width = UIScreen.main.bounds.width
-        // Use adaptive size
-        let bannerSize = largePortraitAnchoredAdaptiveBanner(width: width)
+        let bannerSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(width)
         let banner = BannerView(adSize: bannerSize)
         banner.adUnitID = adUnitID
         banner.rootViewController = viewController
         banner.delegate = context.coordinator
         
-        banner.frame = CGRect(x: 0, y: 0, width: width, height: BannerAdView.bannerHeight)
-        viewController.view.clipsToBounds = true
         viewController.view.addSubview(banner)
-        
         banner.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            banner.centerXAnchor.constraint(equalTo: viewController.view.centerXAnchor),
-            banner.centerYAnchor.constraint(equalTo: viewController.view.centerYAnchor),
-            banner.widthAnchor.constraint(equalToConstant: width),
-            banner.heightAnchor.constraint(equalToConstant: BannerAdView.bannerHeight)
+            banner.topAnchor.constraint(equalTo: viewController.view.topAnchor),
+            banner.bottomAnchor.constraint(equalTo: viewController.view.bottomAnchor),
+            banner.leadingAnchor.constraint(equalTo: viewController.view.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: viewController.view.trailingAnchor)
         ])
         
         banner.load(Request())
-        
         return viewController
     }
     

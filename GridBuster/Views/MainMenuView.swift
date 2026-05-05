@@ -226,25 +226,27 @@ private struct MenuNeonWord: View {
                 .shadow(color: color.opacity(0.55), radius: 24, x: 0, y: 0)
                 .overlay(
                     GeometryReader { geo in
-                        // The Silver Shine: A simpler, more visible silver glint
+                        // The Silver Shine: A narrow, bright diagonal beam
                         ZStack {
                             Rectangle()
                                 .fill(
                                     LinearGradient(
                                         colors: [
                                             .clear,
-                                            .white.opacity(0.3),
-                                            .white.opacity(0.9), // Bright Peak
-                                            .white.opacity(0.3),
+                                            .white.opacity(0.1),
+                                            .white.opacity(0.95), // Bright Peak
+                                            .white.opacity(0.1),
                                             .clear
                                         ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: geo.size.width * 0.4) // Narrow shine beam
-                                .rotationEffect(.degrees(20))
-                                .offset(x: -geo.size.width * 0.5 + (shineOffset * geo.size.width * 2.0))
+                                .frame(width: geo.size.width * 0.3) // Narrow shine beam
+                                .rotationEffect(.degrees(25))
+                                // Move from top-left to bottom-right
+                                .offset(x: -geo.size.width + (shineOffset * geo.size.width * 2.5),
+                                        y: -geo.size.height + (shineOffset * geo.size.height * 2.5))
                         }
                         .mask(
                             Text(text)
@@ -370,12 +372,10 @@ private struct ModeButton: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(glowColor, lineWidth: 3)
         )
-        // Flat intense neon glow, replacing previous heavy drop shadows
         .shadow(color: glowColor.opacity(0.60), radius: 14, x: 0, y: 0)
-        .scaleEffect(isPressed ? 0.96 : 1.0)
-        .animation(.spring(response: 0.22, dampingFraction: 0.65), value: isPressed)
     }
 }
+
 
 // MARK: - ScaleButtonStyle
 

@@ -55,11 +55,11 @@ final class GameScene: SKScene {
     // ── Dynamic Palette System (Prompt 4.2) ──────────────────────────────
     /// 5 curated palettes; cycles on Combo 5+ or board clear.
     private let palettes: [[NeonColor]] = [
-        [.cyan,   .pink,   .purple, .ice,   .blue  ],   // 0 Neon Midnight (default)
-        [.red,    .yellow, .orange, .pink,  .red   ],   // 1 Fire Sunset
-        [.purple, .blue,   .pink,  .ice,   .cyan   ],   // 2 Deep Space
-        [.lime,   .orange, .yellow, .pink,  .lime  ],   // 3 Acid Rave
-        [.ice,    .blue,   .cyan,   .purple,.ice   ],   // 4 Arctic Dream
+        [.cyan,   .pink,   .lime,   .yellow, .blue  ],   // 0 Neon Midnight (Refined to include all colors)
+        [.red,    .yellow, .orange, .pink,   .red   ],   // 1 Fire Sunset
+        [.purple, .blue,   .lime,   .ice,    .cyan  ],   // 2 Deep Space
+        [.lime,   .orange, .yellow, .pink,   .lime  ],   // 3 Acid Rave
+        [.ice,    .blue,   .cyan,   .purple, .ice   ],   // 4 Arctic Dream
     ]
     private var currentPaletteIndex = 0
     private var paletteColorCursor  = 0
@@ -121,12 +121,26 @@ final class GameScene: SKScene {
         }
     }
 
+    // ── Animation States (Prompt: Matrix Scan & Reveal) ──────────────────
+    enum AnimationPhase {
+        case idle
+        case scanning
+        case revealed
+    }
+    private var currentPhase: AnimationPhase = .idle
+
     func startNewGame() {
+        // Stop any ongoing animations
+        removeAllActions()
+        
+        // Clear previous state
         grid.reset()
         for row in 0..<GridManager.gridSize {
             for col in 0..<GridManager.gridSize {
                 placedNodes[row][col]?.removeFromParent()
                 placedNodes[row][col] = nil
+                slotNodes[row][col].alpha = 0.3 // Dimmed initially
+                slotNodes[row][col].setScale(1.0)
             }
         }
         for i in 0..<3 {
@@ -135,49 +149,162 @@ final class GameScene: SKScene {
             trayData[i] = nil
         }
         
-        if adventurePreset == nil, let saved = gameStateManager.savedState {
-            // Restore from saved state
-            scoreManager.restoreState(score: saved.score, combo: saved.combo)
-            currentPaletteIndex = saved.currentPaletteIndex
-            paletteColorCursor = saved.paletteColorCursor
+        // Reset scores for new game
+        scoreManager.reset()
+        currentPaletteIndex = 0
+        paletteColorCursor = 0
+        
+        runStartAnimation()
+    }
 
-            var loadedGrid: [[NeonColor?]] = Array(repeating: Array(repeating: nil, count: GridManager.gridSize), count: GridManager.gridSize)
-            for r in 0..<GridManager.gridSize {
-                for c in 0..<GridManager.gridSize {
-                    if let raw = saved.gridCells[r][c] {
-                        loadedGrid[r][c] = NeonColor(rawValue: raw)
+    private func runStartAnimation() {
+        currentPhase = .scanning
+        let gridSize = GridManager.gridSize
+        
+        // ── 5-Color Neon Palette (Yellow, Pink, Blue, Green, Red) ─────────
+        let scanColors: [SKColor] = [
+            SKColor(red: 1.0,  green: 0.95, blue: 0.0,  alpha: 1.0), // Yellow
+            SKColor(red: 1.0,  green: 0.0,  blue: 1.0,  alpha: 1.0), // Pink
+            SKColor(red: 0.0,  green: 1.0,  blue: 1.0,  alpha: 1.0), // Blue
+            SKColor(red: 0.2,  green: 1.0,  blue: 0.2,  alpha: 1.0), // Green
+            SKColor(red: 1.0,  green: 0.1,  blue: 0.1,  alpha: 1.0)  // Red
+        ]
+        
+        // Clear slots and prep for scanning
+        for row in 0..<gridSize {
+            for col in 0..<gridSize {
+                slotNodes[row][col].alpha = 0.1
+            }
+        }
+        
+        // ── Phase 1: High-Speed Cyberpunk Column Cascades ─────────────────
+        // Each column pulses independently with hollow neon blocks
+        for col in 0..<gridSize {
+            let startFromTop = Bool.random()
+            let colBaseDelay = Double(col) * 0.05 // Rapid cascade
+            
+            for r in 0..<gridSize {
+                let row = startFromTop ? (gridSize - 1 - r) : r
+                let cellColor = scanColors.randomElement() ?? .cyan
+                
+                // ── Create Authentic Game Block Node (Prompt: Exact Game Style) ──
+                // Map SKColor back to NeonColor for the helper
+                let neonColor: NeonColor
+                if cellColor.isEqual(SKColor(red: 1.0, green: 0.95, blue: 0.0, alpha: 1.0)) { neonColor = .yellow }
+                else if cellColor.isEqual(SKColor(red: 1.0, green: 0.0, blue: 1.0, alpha: 1.0)) { neonColor = .pink }
+                else if cellColor.isEqual(SKColor(red: 0.0, green: 1.0, blue: 1.0, alpha: 1.0)) { neonColor = .cyan }
+                else if cellColor.isEqual(SKColor(red: 0.2, green: 1.0, blue: 0.2, alpha: 1.0)) { neonColor = .lime }
+                else { neonColor = .red }
+
+                let scanNode = makePlacedCellNode(color: neonColor)
+                scanNode.alpha = 0
+                scanNode.position = positionForCell(row: row, col: col)
+                scanNode.zPosition = 50
+                effectsLayer.addChild(scanNode)
+                
+                let staggerDelay = Double(r) * 0.025
+                let totalDelay = colBaseDelay + staggerDelay
+                
+                let scanAction = SKAction.sequence([
+                    SKAction.wait(forDuration: totalDelay),
+                    SKAction.group([
+                        SKAction.fadeAlpha(to: 1.0, duration: 0.05),
+                        SKAction.scale(to: 1.1, duration: 0.05)
+                    ]),
+                    // Rapid pulse
+                    SKAction.repeat(SKAction.sequence([
+                        SKAction.fadeAlpha(to: 0.5, duration: 0.05),
+                        SKAction.fadeAlpha(to: 1.0, duration: 0.05)
+                    ]), count: Int.random(in: 1...2)),
+                    SKAction.wait(forDuration: 0.2),
+                    SKAction.group([
+                        SKAction.fadeAlpha(to: 0, duration: 0.15),
+                        SKAction.scale(to: 0.7, duration: 0.15)
+                    ]),
+                    SKAction.removeFromParent()
+                ])
+                scanNode.run(scanAction)
+            }
+        }
+        
+        // Total scan duration ~1.0s, then reveal
+        let maxDelay = 0.6 // Column stagger + row stagger peak
+        let pauseTime = 0.1
+        
+        // ── Phase 3: Reveal (Keep 5-8 random coordinates) ──────────────────
+        self.run(SKAction.sequence([
+            SKAction.wait(forDuration: maxDelay + pauseTime),
+            SKAction.run { [weak self] in
+                guard let self = self else { return }
+                
+                // Select 5-8 unique coordinates
+                var allCoords: [(Int, Int)] = []
+                for r in 0..<gridSize {
+                    for c in 0..<gridSize {
+                        allCoords.append((r, c))
                     }
                 }
-            }
-            grid.loadPreset(loadedGrid)
-            renderPreset()
-
-            // Restore tray
-            for i in 0..<3 {
-                if let shapeID = saved.trayShapeIDs[i], let colorRaw = saved.trayColors[i], let shape = ShapeLibrary.shape(for: shapeID), let color = NeonColor(rawValue: colorRaw) {
-                    trayData[i] = (shape: shape, color: color)
-                } else {
-                    trayData[i] = nil
+                allCoords.shuffle()
+                let selectedCount = Int.random(in: 5...8)
+                let revealedCoords = Array(allCoords.prefix(selectedCount))
+                
+                // Prepare a preset for GridManager
+                var preset: [[NeonColor?]] = Array(repeating: Array(repeating: nil, count: gridSize), count: gridSize)
+                
+                // Animate others to inactive (opacity and scale)
+                for row in 0..<gridSize {
+                    for col in 0..<gridSize {
+                        let slot = slotNodes[row][col]
+                        let isRevealed = revealedCoords.contains { $0.0 == row && $0.1 == col }
+                        
+                        if isRevealed {
+                            // Populate the actual game state
+                            let color = self.nextPaletteColor()
+                            preset[row][col] = color
+                            
+                            let node = makePlacedCellNode(color: color)
+                            node.position = self.positionForCell(row: row, col: col)
+                            node.alpha = 0
+                            node.setScale(0.5)
+                            self.placedLayer.addChild(node)
+                            self.placedNodes[row][col] = node
+                            
+                            // Snappy spring reveal
+                            let scaleAction = SKAction.scale(to: 1.0, duration: 0.25)
+                            scaleAction.timingMode = .easeOut
+                            node.run(SKAction.group([
+                                SKAction.fadeIn(withDuration: 0.2),
+                                scaleAction
+                            ]))
+                            
+                            // Restore slot appearance
+                            slot.run(SKAction.group([
+                                SKAction.fadeAlpha(to: 0.3, duration: 0.3),
+                                SKAction.run {
+                                    slot.fillColor = SKColor(red: 0x12/255, green: 0x12/255, blue: 0x12/255, alpha: 1.0)
+                                }
+                            ]))
+                        } else {
+                            // Non-selected cells fade out snappily
+                            let fadeScale = SKAction.scale(to: 0.9, duration: 0.25)
+                            fadeScale.timingMode = .easeIn
+                            slot.run(SKAction.group([
+                                SKAction.fadeAlpha(to: 0.3, duration: 0.25),
+                                fadeScale,
+                                SKAction.run {
+                                    slot.fillColor = SKColor(red: 0x12/255, green: 0x12/255, blue: 0x12/255, alpha: 1.0)
+                                }
+                            ]))
+                        }
+                    }
                 }
+                
+                self.grid.loadPreset(preset)
+                self.currentPhase = .revealed
+                self.refillTray()
+                self.saveCurrentState()
             }
-            rebuildTrayNodesForCurrentSize()
-            layoutTray()
-            checkGameOverIfNeeded()
-        } else {
-            scoreManager.reset()
-            currentPaletteIndex = 0
-            paletteColorCursor  = 0
-            if let preset = adventurePreset {
-                grid.loadPreset(preset)
-                renderPreset()
-                refillTray()
-            } else {
-                // Classic mode: put a few random shapes so the grid isn't empty
-                placeRandomStartingBlocks()
-                refillTray()
-            }
-            saveCurrentState()
-        }
+        ]))
     }
 
     /// Resumes the current session after a rewarded ad by clearing Game Over and giving easy blocks.
@@ -295,7 +422,7 @@ final class GameScene: SKScene {
 
         let gridW = cellSize * 8
         let gridH = cellSize * 8
-        let gridCenterY = size.height * 0.52
+        let gridCenterY = size.height * 0.49
         gridOrigin = CGPoint(x: (size.width - gridW) * 0.5, y: gridCenterY - gridH * 0.5)
         gridRect = CGRect(x: gridOrigin.x, y: gridOrigin.y, width: gridW, height: gridH)
 
@@ -378,7 +505,7 @@ final class GameScene: SKScene {
     }
 
     private func layoutTray() {
-        let trayY = size.height * 0.16
+        let trayY = size.height * 0.14
         let centers: [CGFloat] = [
             size.width * 0.22,
             size.width * 0.50,
@@ -386,7 +513,7 @@ final class GameScene: SKScene {
         ]
 
         let cardW = size.width * 0.90
-        let cardH = cellSize * 3.6
+        let cardH = cellSize * 2.8
         trayCardNode.position = CGPoint(x: size.width * 0.5, y: trayY)
         trayCardNode.path = CGPath(
             roundedRect: CGRect(x: -cardW * 0.5, y: -cardH * 0.5, width: cardW, height: cardH),
@@ -453,7 +580,7 @@ final class GameScene: SKScene {
 
     private func trayCellSize(for shapes: [BlockShape]) -> CGFloat {
         let cardW = size.width * 0.90
-        let cardH = cellSize * 3.6
+        let cardH = cellSize * 2.8
         let slotW = cardW / 3.0
         let slotH = cardH
         let widestShape = shapes.map(\.width).max() ?? 1
@@ -470,6 +597,9 @@ final class GameScene: SKScene {
         tray[index]?.removeFromParent()
         tray[index] = nil
         trayData[index] = nil
+    }
+
+    private func refillTrayIfNeeded() {
         if trayData.allSatisfy({ $0 == nil }) {
             refillTray()
         }
@@ -565,14 +695,14 @@ final class GameScene: SKScene {
         let placed = grid.place(shape: trayItem.shape, color: trayItem.color, at: origin)
         consumeTrayItem(at: index)
 
-        if hapticsEnabled {
-            lightImpact.prepare()
-            lightImpact.impactOccurred(intensity: 0.8)
-        }
+        SoundManager.shared.playPlace()
 
         animatePlacement(of: placed, color: trayItem.color)
         let cleared = grid.clearFilledLines()
         let totalLines = cleared.clearedRows.count + cleared.clearedCols.count
+        
+        // Immediately refill tray if empty, using the logically cleared grid state
+        refillTrayIfNeeded()
 
         if !cleared.clearedPoints.isEmpty {
             if hapticsEnabled {
@@ -600,8 +730,8 @@ final class GameScene: SKScene {
             SoundManager.shared.playLineClear(comboLevel: max(1, currentCombo))
             screenShake(intensity: currentCombo >= 5 ? 10.0 : 5.0)
             
-            // Show thumbs up emoji at the placement origin
-            showThumbsUpEmoji(at: positionForCell(row: origin.row, col: origin.col))
+            // Show thumbs up emoji at the placement origin with matching color
+            showThumbsUpEmoji(at: positionForCell(row: origin.row, col: origin.col), color: SKColor.neon(trayItem.color))
         }
         if currentCombo >= 5 || cleared.isBoardClear {
             triggerPaletteShift()
@@ -845,28 +975,40 @@ final class GameScene: SKScene {
     }
 
     /// Spawns a floating neon "👍" emoji at the given position.
-    private func showThumbsUpEmoji(at position: CGPoint) {
-        let label = SKLabelNode(text: "👍")
-        label.fontSize = 40
-        label.position = position
-        label.zPosition = 1000
-        label.alpha = 0
-        label.setScale(0.1)
-        effectsLayer.addChild(label)
+    private func showThumbsUpEmoji(at position: CGPoint, color: SKColor) {
+        // Create an effect node to apply a color filter to the emoji
+        let effectNode = SKEffectNode()
+        let filter = CIFilter(name: "CIColorMonochrome")
+        filter?.setValue(CIColor(color: color), forKey: "inputColor")
+        filter?.setValue(1.0, forKey: "inputIntensity")
+        effectNode.filter = filter
         
-        let moveUp = SKAction.moveBy(x: 0, y: 80, duration: 0.8)
+        let label = SKLabelNode(text: "👍")
+        label.fontSize = 45
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+        effectNode.addChild(label)
+        
+        effectNode.position = position
+        effectNode.zPosition = 1000
+        effectNode.alpha = 0
+        effectNode.setScale(0.1)
+        
+        effectsLayer.addChild(effectNode)
+        
+        let moveUp = SKAction.moveBy(x: 0, y: 100, duration: 0.9)
         let fadeIn = SKAction.fadeIn(withDuration: 0.2)
         let scaleUp = SKAction.scale(to: 1.2, duration: 0.2)
         let fadeOut = SKAction.fadeOut(withDuration: 0.4)
         
         let sequence = SKAction.sequence([
             .group([fadeIn, scaleUp]),
-            .wait(forDuration: 0.3),
+            .wait(forDuration: 0.4),
             .group([moveUp, fadeOut]),
             .removeFromParent()
         ])
         
-        label.run(sequence)
+        effectNode.run(sequence)
     }
 
     /// Cycles to the next palette and flashes the grid to signal the change.
@@ -889,7 +1031,7 @@ final class GameScene: SKScene {
         layoutTray()
     }
 
-    /// Full-grid coloured flash signalling a palette switch.
+    // Full-grid coloured flash signalling a palette switch.
     private func animatePaletteFlash(primarySKColor: SKColor) {
         // Screen-wide colour screen overlay
         let overlay = SKShapeNode(rectOf: CGSize(width: size.width * 2, height: size.height * 2))
@@ -968,8 +1110,13 @@ final class GameScene: SKScene {
         let shapes: [BlockShape] = trayData.compactMap { $0?.shape }
         guard shapes.isEmpty == false else { return }   // tray still being filled
         let hasMove = grid.anyMovePossible(shapes: shapes)
-        // Bidirectional assignment: also clears a false-positive from pre-clear check
+        
+        let wasGameOver = scoreManager.isGameOver
         scoreManager.isGameOver = !hasMove
+        
+        if !wasGameOver && scoreManager.isGameOver {
+            SoundManager.shared.playGameOver()
+        }
     }
 
     private func saveCurrentState() {

@@ -19,11 +19,12 @@ final class Score: ObservableObject {
     @Published private(set) var bestScore:   Int  = 0
     /// Consecutive-clear streak (resets when a placement clears nothing).
     @Published private(set) var combo:       Int  = 0
+    /// Turns remaining to keep the combo alive after a turn with no clear.
+    @Published private(set) var comboGraceMoves: Int  = 0
     @Published var isGameOver: Bool = false
 
     // ── Private ──────────────────────────────────────────────────────────
     private var lastMoveCleared: Bool = false
-    private var comboGraceMoves: Int  = 0
     private let bestKey = "NeonGridBuster.bestScore"
 
     // MARK: - Init

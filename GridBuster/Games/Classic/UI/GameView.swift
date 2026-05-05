@@ -96,35 +96,48 @@ struct GameView: View {
     }
 
     var body: some View {
-        ZStack {
-            // ── Pure black game canvas (Prompt 4.1) ──────────────────────
-            Color.black.ignoresSafeArea()
+        VStack(spacing: 0) {
+            ZStack {
+                // ── Pure black game canvas (Prompt 4.1) ──────────────────────
+                Color.black.ignoresSafeArea()
 
-            // ── SpriteKit board ───────────────────────────────────────────
-            SpriteView(
-                scene: container.scene,
-                options: [.allowsTransparency, .shouldCullNonVisibleNodes]
-            )
-            .background(Color.black) // Fix: ensures black background during scene load
-            .ignoresSafeArea()
-
-            // ── HUD overlay ───────────────────────────────────────────────
-            VStack(spacing: 0) {
-                gameHUD
-                Spacer()
-            }
-
-            // ── Game Over overlay ─────────────────────────────────────────
-            if container.scoreManager.isGameOver {
-                GameOverOverlay(
-                    score:     container.scoreManager.score,
-                    best:      container.scoreManager.bestScore,
-                    playAgain: { container.scene.startNewGame() },
-                    continueGame: { container.scene.continueAfterAd() },
-                    goHome:    { dismiss() }
+                // ── SpriteKit board ───────────────────────────────────────────
+                SpriteView(
+                    scene: container.scene,
+                    options: [.allowsTransparency, .shouldCullNonVisibleNodes]
                 )
-                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                .background(Color.black) // Fix: ensures black background during scene load
+                .ignoresSafeArea()
+
+                // ── HUD overlay ───────────────────────────────────────────────
+                VStack(spacing: 0) {
+                    gameHUD
+                    Spacer()
+                }
+
+                // ── Game Over overlay ─────────────────────────────────────────
+                if container.scoreManager.isGameOver {
+                    GameOverOverlay(
+                        score:     container.scoreManager.score,
+                        best:      container.scoreManager.bestScore,
+                        playAgain: { container.scene.startNewGame() },
+                        continueGame: { container.scene.continueAfterAd() },
+                        goHome:    { dismiss() }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .onAppear {
+                        // Show interstitial when Game Over screen appears
+                        print("GameView: Game Over triggered, showing interstitial...")
+                        AdsManager.shared.maybeShowInterstitial {
+                            print("GameView: Interstitial flow finished.")
+                        }
+                    }
+                }
             }
+            
+            // ── Banner Ad at bottom ──────────────────────────────────────
+            BannerAdView()
+                .padding(.bottom, 4)
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -165,7 +178,7 @@ struct GameView: View {
     /// Top bar: [Crown + Best Score] (Left) | [Gear] (Right)
     /// Bottom row: [Large Centre Score]
     private var gameHUD: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             
             // ── Top Row: High Score & Settings ───────────────────────────
             HStack(alignment: .center) {
@@ -173,11 +186,11 @@ struct GameView: View {
                 // Left: Crown + High Score
                 HStack(spacing: 8) {
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 22, weight: .black))
+                        .font(.system(size: 20, weight: .black))
                         .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.7)) // Dark blue
 
                     Text("\(container.scoreManager.bestScore)")
-                        .font(.system(size: 22, weight: .heavy, design: .rounded))
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(red: 1.0, green: 0.35, blue: 0.5)) // Pinkish
                         .contentTransition(.numericText())
                 }
@@ -193,7 +206,7 @@ struct GameView: View {
                 // Right: Settings Gear
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 26, weight: .bold))
+                        .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.3), radius: 2)
                 }
@@ -201,7 +214,7 @@ struct GameView: View {
             .padding(.horizontal, 24)
 
             // ── Bottom Row: Large Current Score ───────────────────────────
-            VStack(spacing: 0) {
+            VStack(spacing: 2) {
                 NeonScoreLabel(
                     score: container.scoreManager.score,
                     scale: scoreScale
@@ -216,10 +229,10 @@ struct GameView: View {
             .animation(.spring(response: 0.22, dampingFraction: 0.65),
                        value: container.scoreManager.combo)
         }
-        .padding(.top, 16)   // reduced from 56 to prevent grid overlap
+        .padding(.top, 8)   // moved up further
     }
 
-    @State private var comboPulse = 1.0
+    @State private var comboPulseValue = 1.0
 
     // Combo streak badge
     private var comboBadge: some View {
@@ -232,13 +245,33 @@ struct GameView: View {
             .background(Color.black.opacity(0.55), in: Capsule())
             .overlay(Capsule().stroke(Color(red: 1, green: 0.95, blue: 0).opacity(0.50), lineWidth: 1))
             .shadow(color: Color(red: 1, green: 0.95, blue: 0).opacity(0.45), radius: 6)
-            .scaleEffect(comboPulse)
+            .scaleEffect(comboPulseValue)
             .offset(y: 6)
             .onAppear {
-                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
-                    comboPulse = 1.15
-                }
+                startComboPulsing()
             }
+            .onChange(of: container.scoreManager.comboGraceMoves) { _, _ in
+                startComboPulsing()
+            }
+    }
+    
+    private func startComboPulsing() {
+        // Variable speed based on missed turns (grace moves)
+        // 2 grace moves: slow (0.6s)
+        // 1 grace move:  medium (0.4s)
+        // 0 grace moves: fast (0.15s) - Danger zone!
+        let duration: Double
+        switch container.scoreManager.comboGraceMoves {
+        case 2:  duration = 0.6
+        case 1:  duration = 0.4
+        default: duration = 0.15
+        }
+        
+        // Reset scale first to restart animation smoothly
+        comboPulseValue = 1.0
+        withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+            comboPulseValue = 1.22
+        }
     }
 }
 
@@ -290,6 +323,8 @@ private struct GameOverOverlay: View {
     let playAgain:     () -> Void
     let continueGame:  () -> Void
     let goHome:        () -> Void
+    
+    @State private var watchAdTapCount = 0
 
     var body: some View {
         ZStack {
@@ -344,12 +379,23 @@ private struct GameOverOverlay: View {
                         playAgain()
                     }
 
+
                     NeonGameOverButton(
                         title:      "Watch Ad",
                         systemIcon: "play.rectangle.fill",
                         accentColor: Color(red: 0.0, green: 0.8, blue: 0.4),
                         glowColor:   Color(red: 0.0, green: 1.0, blue: 0.0)
                     ) {
+                        #if DEBUG
+                        watchAdTapCount += 1
+                        print("AdMob Debug: Watch Ad Taps: \(watchAdTapCount)")
+                        if watchAdTapCount >= 5 {
+                            print("AdMob Debug: 5-tap bypass triggered. Rewarding user.")
+                            continueGame()
+                            return
+                        }
+                        #endif
+
                         AdsManager.shared.showRewardedAd { earned in
                             if earned {
                                 continueGame()

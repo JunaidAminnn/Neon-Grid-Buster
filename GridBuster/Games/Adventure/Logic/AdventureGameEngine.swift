@@ -243,6 +243,7 @@ final class AdventureGameEngine: ObservableObject {
         let allCleared = remainingTargets.values.allSatisfy { $0 == 0 }
         if allCleared && currentLevel.hasTargets {
             isLevelWon = true
+            SoundManager.shared.playWin()
         }
     }
 
