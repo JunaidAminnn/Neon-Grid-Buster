@@ -13,10 +13,9 @@
 //    weighted random sampling (no pool-repetition hack).
 //  • BlockGenerator.generateTray(score:grid:) spawns exactly 3 shapes per
 //    round using the following rules:
-//      – score < 1 000  →  MERCY CHECK ON: at least one of the 3 shapes
-//                          must fit somewhere on the current grid.
-//      – score ≥ 1 000  →  MERCY CHECK OFF: pure weighted random, no
-//                          guarantee any piece fits (full difficulty mode).
+//      – FAIRNESS CHECK ALWAYS ON: every tray is guaranteed to have at least
+//        one move, and where possible, all 3 shapes will fit individually.
+//      – Fallback to emergency shapes (1×1, 1×2) if the board is nearly full.
 //  • Tier weights shift with score so harder shapes appear more often as
 //    the game progresses.
 //  ─────────────────────────────────────────────────────────────────────────
@@ -368,12 +367,9 @@ final class BlockGenerator {
 
     // ── Configuration ────────────────────────────────────────────────────
 
-    /// Score at which mercy-check is permanently disabled.
-    static let mercyScoreThreshold: Int = 1_000
-
     /// Maximum placement-search attempts before falling back to emergency tray.
-    private let maxMercyAttempts   = 200
-    private let exhaustiveDepth    = 32
+    private let maxFairnessAttempts = 300
+    private let exhaustiveDepth    = 64
 
     // ── RNG ──────────────────────────────────────────────────────────────
     private var rng = SystemRandomNumberGenerator()
@@ -383,25 +379,15 @@ final class BlockGenerator {
     /// Generates exactly 3 shapes for the tray.
     ///
     /// - Parameters:
-    ///   - score: Current player score. Controls tier weights & mercy mode.
-    ///   - grid: Current grid state used for mercy / solvability checks.
+    ///   - score: Current player score. Controls tier weights.
+    ///   - grid: Current grid state used for fairness / solvability checks.
     func generateTray(score: Int, grid: GridManager) -> [(shape: BlockShape, color: NeonColor)] {
-
-        let mercyActive = score < Self.mercyScoreThreshold
-
-        if mercyActive {
-            // ── Mercy Mode: guarantee at least one piece fits ────────────
-            if let shapes = generateMercyTray(score: score, grid: grid) {
-                return colorise(shapes)
-            }
-            // Safety fallback (shouldn't normally be reached)
-            return colorise(emergencyTray(on: grid))
-        } else {
-            // ── Full Difficulty: pure weighted random, no mercy ──────────
-            let pool = buildPool(for: score)
-            let shapes = (0..<3).map { _ in pool.randomElement(using: &rng).shape }
+        // ── Fairness Mode: guarantee at least one piece fits, strive for all 3 ──
+        if let shapes = generateFairTray(score: score, grid: grid) {
             return colorise(shapes)
         }
+        // Safety fallback (shouldn't normally be reached)
+        return colorise(emergencyTray(on: grid))
     }
     func generateEasyTray() -> [BlockShape] {
         let easyShapes = ShapeLibrary.easy.map(\.shape)
@@ -410,29 +396,41 @@ final class BlockGenerator {
         return (0..<3).compactMap { _ in easyShapes.randomElement(using: &rng) ?? easyShapes.first }
     }
 
-    // MARK: - Mercy Tray Generation
+    // MARK: - Fair Tray Generation
 
-    /// Produces a tray where at least one shape fits on `grid`.
-    private func generateMercyTray(score: Int, grid: GridManager) -> [BlockShape]? {
+    /// Produces a tray where blocks are guaranteed to be placeable.
+    /// Ideally all 3 fit individually; at minimum one must fit.
+    private func generateFairTray(score: Int, grid: GridManager) -> [BlockShape]? {
         let pool = buildPool(for: score)
 
-        for _ in 0..<maxMercyAttempts {
+        // Attempt 1: All 3 fit individually (Ideal for player agency)
+        for _ in 0..<maxFairnessAttempts {
             let candidate = (0..<3).map { _ in pool.randomElement(using: &rng).shape }
-            // Mercy check: at least one shape must fit somewhere
+            if candidate.allSatisfy({ grid.canPlaceAnywhere(shape: $0) }) {
+                return candidate
+            }
+        }
+
+        // Attempt 2: At least one fits (Minimum fairness)
+        for _ in 0..<maxFairnessAttempts / 2 {
+            let candidate = (0..<3).map { _ in pool.randomElement(using: &rng).shape }
             if candidate.contains(where: { grid.canPlaceAnywhere(shape: $0) }) {
                 return candidate
             }
         }
 
-        // Exhaustive search over a sampled subset of the pool
+        // Attempt 3: Exhaustive search over a sampled subset of the library
         let allShapes = ShapeLibrary.all.map(\.shape)
         let sample    = Array(allShapes.shuffled(using: &rng).prefix(exhaustiveDepth))
 
         for first in sample {
             if grid.canPlaceAnywhere(shape: first) {
-                // Pair with two random shapes from pool (mercy satisfied by `first`)
-                let second = pool.randomElement(using: &rng).shape
-                let third  = pool.randomElement(using: &rng).shape
+                // Pair with two random shapes that also fit if possible, or just random from pool
+                let secondCandidate = pool.randomElement(using: &rng).shape
+                let second = grid.canPlaceAnywhere(shape: secondCandidate) ? secondCandidate : (sample.first(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[0].shape)
+                let thirdCandidate  = pool.randomElement(using: &rng).shape
+                let third  = grid.canPlaceAnywhere(shape: thirdCandidate) ? thirdCandidate : (sample.first(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[1].shape)
+                
                 return [first, second, third].shuffled(using: &rng)
             }
         }
