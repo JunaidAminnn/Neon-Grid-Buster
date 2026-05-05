@@ -40,7 +40,6 @@ final class SoundManager {
         // Pre-render 10 bright achievement chimes: base 523.25 Hz (C5), +1 semitone each step
         let baseFreq  = 523.25
         let semitone  = pow(2.0, 1.0 / 12.0)
-        let frameCount = AVAudioFrameCount(sampleRate * 0.6) // longer ring for achievement feel
 
         // Render regular Line Clear sounds (Inc. pings)
         for i in 0..<10 {
