@@ -13,7 +13,8 @@ final class SoundManager {
 
     private let engine    = AVAudioEngine()
     private var nodes:    [AVAudioPlayerNode] = []
-    private var buffers:  [AVAudioPCMBuffer]  = []
+    private var lineBuffers:  [AVAudioPCMBuffer]  = []
+    private var comboBuffers: [AVAudioPCMBuffer]  = []
     private var slot      = 0
     private var isReady   = false
 
@@ -41,40 +42,18 @@ final class SoundManager {
         let semitone  = pow(2.0, 1.0 / 12.0)
         let frameCount = AVAudioFrameCount(sampleRate * 0.6) // longer ring for achievement feel
 
+        // Render regular Line Clear sounds (Inc. pings)
         for i in 0..<10 {
             let freq = baseFreq * pow(semitone, Double(i))
-            guard let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { continue }
-            buf.frameLength = frameCount
-            let ch = buf.floatChannelData![0]
-            
-            for f in 0..<Int(frameCount) {
-                let t = Double(f) / sampleRate
-                
-                // Achievement envelope: very sharp attack, long chime-like decay
-                let attack = min(1.0, t / 0.003) // 3ms ultra-sharp attack
-                let decay  = exp(-t * 4.5)       // slower decay for ringing effect
-                
-                // Add a little bit of "shimmer" with vibrato
-                let vibrato = 1.0 + 0.003 * sin(2.0 * .pi * 8.0 * t)
-                let fv = freq * vibrato
-                
-                // Layered harmonics for a "bell/chime" richness
-                // Candy Crush sounds often have a strong 2nd and 3rd harmonic
-                let fundamental = sin(2.0 * .pi * fv * t)
-                let h2 = sin(2.0 * .pi * (fv * 2.0) * t) * 0.6 * exp(-t * 8.0)
-                let h3 = sin(2.0 * .pi * (fv * 3.0) * t) * 0.4 * exp(-t * 12.0)
-                let h4 = sin(2.0 * .pi * (fv * 4.0) * t) * 0.25 * exp(-t * 18.0)
-                let h5 = sin(2.0 * .pi * (fv * 1.5) * t) * 0.15 * exp(-t * 22.0) // Fifth for "magical" chime coloring
-                
-                // Add a high-freq percussive "click" at the start
-                let click = (f < 100) ? 0.3 * (Double.random(in: -1...1)) : 0
-                
-                let wave = fundamental + h2 + h3 + h4 + h5 + click
-                
-                // Gain 0.32 to avoid clipping with rich harmonics
-                ch[f] = Float(wave * attack * decay * 0.32)
-            }
-            buffers.append(buf)
+            guard let buf = renderChime(frequency: freq, duration: 0.5, format: format) else { continue }
+            lineBuffers.append(buf)
+        }
+        
+        // Render magical Combo sounds (Higher richness, longer ring)
+        for i in 0..<10 {
+            let freq = baseFreq * 1.5 * pow(semitone, Double(i)) // Start from a higher base (G5 approx)
+            guard let buf = renderChime(frequency: freq, duration: 1.2, isCombo: true, format: format) else { continue }
+            comboBuffers.append(buf)
         }
 
         do {
@@ -88,6 +67,9 @@ final class SoundManager {
     /// Play the tone for `comboLevel` (1-based, clamped to 1…10).
     func playLineClear(comboLevel: Int) {
         guard isReady else { return }
+        let isHighCombo = comboLevel >= 3
+        let buffers = isHighCombo ? comboBuffers : lineBuffers
+        
         let idx = max(0, min(comboLevel - 1, 9))
         guard idx < buffers.count else { return }
         let node = nodes[slot % nodes.count]
@@ -95,5 +77,34 @@ final class SoundManager {
         node.stop()
         node.scheduleBuffer(buffers[idx], completionHandler: nil)
         node.play()
+    }
+    
+    private func renderChime(frequency: Double, duration: Double, isCombo: Bool = false, format: AVAudioFormat) -> AVAudioPCMBuffer? {
+        let sampleRate = format.sampleRate
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }
+        buf.frameLength = frameCount
+        let ch = buf.floatChannelData![0]
+        
+        for f in 0..<Int(frameCount) {
+            let t = Double(f) / sampleRate
+            let attack = min(1.0, t / 0.004)
+            let decay  = exp(-t * (isCombo ? 2.5 : 5.0))
+            
+            let vibrato = 1.0 + (isCombo ? 0.005 : 0.002) * sin(2.0 * .pi * 6.0 * t)
+            let fv = frequency * vibrato
+            
+            let fund = sin(2.0 * .pi * fv * t)
+            let h2   = sin(2.0 * .pi * (fv * 2.0) * t) * 0.5 * exp(-t * 10.0)
+            let h3   = sin(2.0 * .pi * (fv * 3.0) * t) * 0.3 * exp(-t * 15.0)
+            let h4   = sin(2.0 * .pi * (fv * 4.0) * t) * 0.2 * exp(-t * 20.0)
+            
+            // Magical fifth harmonic for combos
+            let fifth = isCombo ? sin(2.0 * .pi * (fv * 1.5) * t) * 0.4 * exp(-t * 5.0) : 0
+            
+            let wave = (fund + h2 + h3 + h4 + fifth)
+            ch[f] = Float(wave * attack * decay * 0.35)
+        }
+        return buf
     }
 }

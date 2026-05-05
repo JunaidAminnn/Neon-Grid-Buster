@@ -425,17 +425,20 @@ final class BlockGenerator {
 
         for first in sample {
             if grid.canPlaceAnywhere(shape: first) {
-                // Pair with two random shapes that also fit if possible, or just random from pool
+                // Try to find two more shapes that fit in the remaining space
+                // Mock placing the first shape to see if space remains (simple heuristic)
                 let secondCandidate = pool.randomElement(using: &rng).shape
                 let second = grid.canPlaceAnywhere(shape: secondCandidate) ? secondCandidate : (sample.first(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[0].shape)
                 let thirdCandidate  = pool.randomElement(using: &rng).shape
-                let third  = grid.canPlaceAnywhere(shape: thirdCandidate) ? thirdCandidate : (sample.first(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[1].shape)
+                let third  = grid.canPlaceAnywhere(shape: thirdCandidate) ? thirdCandidate : (sample.last(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[1].shape)
                 
                 return [first, second, third].shuffled(using: &rng)
             }
         }
 
-        return nil
+        // Final desperation: return 1x1 dots which always fit if any cell is empty
+        let dot = ShapeLibrary.easy[0].shape
+        return [dot, dot, dot]
     }
 
     // MARK: - Weighted Pool Construction

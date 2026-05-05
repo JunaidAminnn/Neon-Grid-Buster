@@ -105,6 +105,7 @@ struct GameView: View {
                 scene: container.scene,
                 options: [.allowsTransparency, .shouldCullNonVisibleNodes]
             )
+            .background(Color.black) // Fix: ensures black background during scene load
             .ignoresSafeArea()
 
             // ── HUD overlay ───────────────────────────────────────────────
@@ -218,6 +219,8 @@ struct GameView: View {
         .padding(.top, 16)   // reduced from 56 to prevent grid overlap
     }
 
+    @State private var comboPulse = 1.0
+
     // Combo streak badge
     private var comboBadge: some View {
         Text("x\(container.scoreManager.combo) COMBO")
@@ -229,7 +232,13 @@ struct GameView: View {
             .background(Color.black.opacity(0.55), in: Capsule())
             .overlay(Capsule().stroke(Color(red: 1, green: 0.95, blue: 0).opacity(0.50), lineWidth: 1))
             .shadow(color: Color(red: 1, green: 0.95, blue: 0).opacity(0.45), radius: 6)
+            .scaleEffect(comboPulse)
             .offset(y: 6)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                    comboPulse = 1.15
+                }
+            }
     }
 }
 

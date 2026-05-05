@@ -599,6 +599,9 @@ final class GameScene: SKScene {
         if totalLines > 0 {
             SoundManager.shared.playLineClear(comboLevel: max(1, currentCombo))
             screenShake(intensity: currentCombo >= 5 ? 10.0 : 5.0)
+            
+            // Show thumbs up emoji at the placement origin
+            showThumbsUpEmoji(at: positionForCell(row: origin.row, col: origin.col))
         }
         if currentCombo >= 5 || cleared.isBoardClear {
             triggerPaletteShift()
@@ -839,6 +842,31 @@ final class GameScene: SKScene {
         }
         actions.append(.move(to: origin, duration: 0.025))
         gameCamera.run(.sequence(actions), withKey: "shake")
+    }
+
+    /// Spawns a floating neon "👍" emoji at the given position.
+    private func showThumbsUpEmoji(at position: CGPoint) {
+        let label = SKLabelNode(text: "👍")
+        label.fontSize = 40
+        label.position = position
+        label.zPosition = 1000
+        label.alpha = 0
+        label.setScale(0.1)
+        effectsLayer.addChild(label)
+        
+        let moveUp = SKAction.moveBy(x: 0, y: 80, duration: 0.8)
+        let fadeIn = SKAction.fadeIn(withDuration: 0.2)
+        let scaleUp = SKAction.scale(to: 1.2, duration: 0.2)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.4)
+        
+        let sequence = SKAction.sequence([
+            .group([fadeIn, scaleUp]),
+            .wait(forDuration: 0.3),
+            .group([moveUp, fadeOut]),
+            .removeFromParent()
+        ])
+        
+        label.run(sequence)
     }
 
     /// Cycles to the next palette and flashes the grid to signal the change.
