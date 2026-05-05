@@ -399,46 +399,66 @@ final class BlockGenerator {
     // MARK: - Fair Tray Generation
 
     /// Produces a tray where blocks are guaranteed to be placeable.
-    /// Ideally all 3 fit individually; at minimum one must fit.
+    /// Ensures that there exists at least one sequence to place ALL 3 blocks.
     private func generateFairTray(score: Int, grid: GridManager) -> [BlockShape]? {
         let pool = buildPool(for: score)
 
-        // Attempt 1: All 3 fit individually (Ideal for player agency)
-        for _ in 0..<maxFairnessAttempts {
-            let candidate = (0..<3).map { _ in pool.randomElement(using: &rng).shape }
-            if candidate.allSatisfy({ grid.canPlaceAnywhere(shape: $0) }) {
-                return candidate
-            }
-        }
-
-        // Attempt 2: At least one fits (Minimum fairness)
+        // Attempt 1: All 3 fit sequentially (The most robust check)
         for _ in 0..<maxFairnessAttempts / 2 {
             let candidate = (0..<3).map { _ in pool.randomElement(using: &rng).shape }
-            if candidate.contains(where: { grid.canPlaceAnywhere(shape: $0) }) {
+            if canPlaceAllSequential(candidate, on: grid) {
                 return candidate
             }
         }
 
-        // Attempt 3: Exhaustive search over a sampled subset of the library
-        let allShapes = ShapeLibrary.all.map(\.shape)
-        let sample    = Array(allShapes.shuffled(using: &rng).prefix(exhaustiveDepth))
-
-        for first in sample {
-            if grid.canPlaceAnywhere(shape: first) {
-                // Try to find two more shapes that fit in the remaining space
-                // Mock placing the first shape to see if space remains (simple heuristic)
-                let secondCandidate = pool.randomElement(using: &rng).shape
-                let second = grid.canPlaceAnywhere(shape: secondCandidate) ? secondCandidate : (sample.first(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[0].shape)
-                let thirdCandidate  = pool.randomElement(using: &rng).shape
-                let third  = grid.canPlaceAnywhere(shape: thirdCandidate) ? thirdCandidate : (sample.last(where: { grid.canPlaceAnywhere(shape: $0) }) ?? ShapeLibrary.easy[1].shape)
-                
-                return [first, second, third].shuffled(using: &rng)
+        // Attempt 2: Fallback to easier shapes if hard ones don't fit together
+        let easyPool = WeightedPool(entries: ShapeLibrary.easy.map { ($0, $0.spawnWeight) })
+        for _ in 0..<maxFairnessAttempts / 4 {
+            let candidate = [
+                pool.randomElement(using: &rng).shape,
+                easyPool.randomElement(using: &rng).shape,
+                easyPool.randomElement(using: &rng).shape
+            ].shuffled(using: &rng)
+            
+            if canPlaceAllSequential(candidate, on: grid) {
+                return candidate
             }
         }
 
         // Final desperation: return 1x1 dots which always fit if any cell is empty
         let dot = ShapeLibrary.easy[0].shape
         return [dot, dot, dot]
+    }
+
+    /// Backtracking solver to verify if all shapes in a set can be placed sequentially.
+    private func canPlaceAllSequential(_ shapes: [BlockShape], on grid: GridManager) -> Bool {
+        if shapes.isEmpty { return true }
+        
+        // Try each shape as the next move
+        for (i, shape) in shapes.enumerated() {
+            // Find all valid placements
+            let placements = grid.validPlacements(for: shape)
+            if placements.isEmpty { continue }
+            
+            // To prevent O(N!) explosion on empty boards, we only sample a few placements
+            // but prioritize ones that might clear lines.
+            let sampledPlacements = placements.shuffled(using: &rng).prefix(12)
+            
+            for point in sampledPlacements {
+                let nextGrid = grid.copy()
+                _ = nextGrid.place(shape: shape, color: .cyan, at: point)
+                _ = nextGrid.clearFilledLines()
+                
+                var remaining = shapes
+                remaining.remove(at: i)
+                
+                if canPlaceAllSequential(remaining, on: nextGrid) {
+                    return true
+                }
+            }
+        }
+        
+        return false
     }
 
     // MARK: - Weighted Pool Construction
