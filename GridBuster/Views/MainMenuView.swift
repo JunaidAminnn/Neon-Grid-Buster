@@ -26,7 +26,7 @@ struct MainMenuView: View {
     @State private var glowPulse      = false
     
     // shimmer phase
-    @State private var globalShimmerPhase: CGFloat = -1.2
+    @State private var globalShimmerPhase: CGFloat = -0.5
 
     // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
@@ -109,8 +109,8 @@ struct MainMenuView: View {
                 // Start shimmer exactly 1 second after appear
                 // Using a range that ensures a clean sweep across the UnitPoint space
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.linear(duration: 4.5).repeatForever(autoreverses: false)) {
-                        globalShimmerPhase = 2.2
+                    withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                        globalShimmerPhase = 1.5
                     }
                 }
                 
@@ -248,16 +248,14 @@ private struct MenuNeonWord: View {
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.45),
-                            .init(color: .white, location: 0.5),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.55),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.7), location: 0.47),
+                            .init(color: .white.opacity(0.9), location: 0.5),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.7), location: 0.53),
                             .init(color: .clear, location: 1)
                         ],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: .init(x: shimmerPhase - 0.5, y: 0.5),
+                        endPoint: .init(x: shimmerPhase + 0.5, y: 0.5)
                     )
-                    .scaleEffect(x: 3.0, y: 1.0)
-                    .offset(x: -200 + (400 * (shimmerPhase / 2.0))) // Slide the gradient across
                     .mask(
                         Text(text)
                             .font(.system(size: fontSize, weight: .black, design: .rounded))
