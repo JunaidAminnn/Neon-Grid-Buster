@@ -241,27 +241,25 @@ private struct MenuNeonWord: View {
             Text(text)
                 .font(.system(size: fontSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
-                .shadow(color: color,               radius: 10, x: 0, y: 0)
-                .overlay(
-                    // Silver Shimmer directly on the text core using UnitPoint sweep
-                    // This avoids GeometryReader coordinate issues
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.3), location: 0.4),
-                            .init(color: Color(red: 1, green: 0.5, blue: 1).opacity(0.9), location: 0.5),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.3), location: 0.6),
-                            .init(color: .clear, location: 1)
-                        ],
-                        startPoint: .init(x: shimmerPhase - 0.8, y: shimmerPhase - 0.8),
-                        endPoint: .init(x: shimmerPhase + 0.2, y: shimmerPhase + 0.2)
-                    )
-                    .mask(
-                        Text(text)
-                            .font(.system(size: fontSize, weight: .black, design: .rounded))
-                    )
-                    .blendMode(.screen)
-                )
+                .shadow(color: color, radius: 10, x: 0, y: 0)
+
+            // High-Visibility Pink Shimmer (Top Layer)
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.6), location: 0.4),
+                    .init(color: Color.white.opacity(0.95), location: 0.5),
+                    .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.6), location: 0.6),
+                    .init(color: .clear, location: 1)
+                ],
+                startPoint: .init(x: shimmerPhase - 0.8, y: shimmerPhase - 0.8),
+                endPoint: .init(x: shimmerPhase + 0.2, y: shimmerPhase + 0.2)
+            )
+            .mask(
+                Text(text)
+                    .font(.system(size: fontSize, weight: .black, design: .rounded))
+            )
+            .blendMode(.plusLighter)
         }
         .fixedSize(horizontal: true, vertical: false)
         .onAppear {
