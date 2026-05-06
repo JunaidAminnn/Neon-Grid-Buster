@@ -248,9 +248,9 @@ private struct MenuNeonWord: View {
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.45),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.45),
                             .init(color: .white, location: 0.5),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.55),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.55),
                             .init(color: .clear, location: 1)
                         ],
                         startPoint: .leading,
@@ -262,7 +262,6 @@ private struct MenuNeonWord: View {
                         Text(text)
                             .font(.system(size: fontSize, weight: .black, design: .rounded))
                     )
-                    .blendMode(.plusLighter)
                 )
         }
         .fixedSize(horizontal: true, vertical: false)
