@@ -241,16 +241,16 @@ private struct MenuNeonWord: View {
             // Crisp core
             Text(text)
                 .font(.system(size: fontSize, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(white: 0.80)) // Dimmed to let the pure white shine pop
                 .shadow(color: color, radius: 10, x: 0, y: 0)
                 .overlay(
                     // Normal White Shimmer (Top Layer)
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: Color.white.opacity(0.4), location: 0.45),
+                            .init(color: Color.white.opacity(0.8), location: 0.45),
                             .init(color: .white, location: 0.5),
-                            .init(color: Color.white.opacity(0.4), location: 0.55),
+                            .init(color: Color.white.opacity(0.8), location: 0.55),
                             .init(color: .clear, location: 1)
                         ],
                         startPoint: .leading,
