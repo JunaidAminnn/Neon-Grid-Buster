@@ -37,13 +37,13 @@ struct MenuNeonWord: View {
                 .foregroundStyle(.white)
                 .shadow(color: color, radius: 10, x: 0, y: 0)
                 .overlay(
-                    // Signature Neon Lime Shimmer (Top Layer)
+                    // Signature Light Grey Shimmer (Top Layer)
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: Theme.Palette.neonLime.opacity(0.85), location: 0.42),
-                            .init(color: .white.opacity(0.95), location: 0.5),
-                            .init(color: Theme.Palette.neonLime.opacity(0.85), location: 0.58),
+                            .init(color: .white.opacity(0.35), location: 0.42),
+                            .init(color: .white.opacity(0.85), location: 0.5),
+                            .init(color: .white.opacity(0.35), location: 0.58),
                             .init(color: .clear, location: 1)
                         ],
                         startPoint: .init(x: shimmerPhase - 0.45, y: 0),
