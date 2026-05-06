@@ -109,7 +109,7 @@ struct MainMenuView: View {
                 // Start shimmer exactly 1 second after appear
                 // Using a range that ensures a clean sweep across the UnitPoint space
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                    withAnimation(.linear(duration: 3.5).repeatForever(autoreverses: true)) {
                         globalShimmerPhase = 2.0
                     }
                 }
@@ -244,13 +244,13 @@ private struct MenuNeonWord: View {
                 .foregroundStyle(.white)
                 .shadow(color: color, radius: 10, x: 0, y: 0)
                 .overlay(
-                    // High-Visibility Pink Shimmer (Top Layer)
+                    // Normal White Shimmer (Top Layer)
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.45),
+                            .init(color: Color.white.opacity(0.4), location: 0.45),
                             .init(color: .white, location: 0.5),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.85), location: 0.55),
+                            .init(color: Color.white.opacity(0.4), location: 0.55),
                             .init(color: .clear, location: 1)
                         ],
                         startPoint: .leading,
