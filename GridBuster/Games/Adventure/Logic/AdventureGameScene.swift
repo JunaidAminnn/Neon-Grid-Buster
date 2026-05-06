@@ -547,9 +547,12 @@ final class AdventureGameScene: SKScene {
         // (cells that went from non-empty to .empty since our move)
         animateClearsFromEngine()
 
-        if !clearedGems.isEmpty && hapticsEnabled {
-            heavyImpact.prepare()
-            heavyImpact.impactOccurred()
+        if !clearedGems.isEmpty {
+            SoundManager.shared.playLineClear(comboLevel: max(1, engine.combo), color: tempColor)
+            if hapticsEnabled {
+                heavyImpact.prepare()
+                heavyImpact.impactOccurred()
+            }
         }
 
         // ── 6. Screen shake on clear ──────────────────────────────────────

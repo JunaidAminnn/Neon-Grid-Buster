@@ -13,8 +13,8 @@ final class SoundManager {
 
     private let engine    = AVAudioEngine()
     private var nodes:    [AVAudioPlayerNode] = []
-    private var lineBuffers:  [AVAudioPCMBuffer]  = []
-    private var comboBuffers: [AVAudioPCMBuffer]  = []
+    private var colorBuffers: [NeonColor: [AVAudioPCMBuffer]] = [:]
+    private var comboColorBuffers: [NeonColor: [AVAudioPCMBuffer]] = [:]
     private var placeBuffer:  AVAudioPCMBuffer?
     private var clickBuffer:  AVAudioPCMBuffer?
     private var gameOverBuffer: AVAudioPCMBuffer?
@@ -48,24 +48,31 @@ final class SoundManager {
         gameOverBuffer = renderGameOver(format: format)
         winBuffer      = renderWin(format: format)
 
-        // Pre-render 10 bright achievement chimes: base 523.25 Hz (C5)
-        let baseFreq  = 523.25
-        let semitone  = pow(2.0, 1.0 / 12.0)
-
-        // Render regular Line Clear sounds (Crystal chimes)
-        for i in 0..<10 {
-            let freq = baseFreq * pow(semitone, Double(i))
-            if let buf = renderChime(frequency: freq, duration: 0.8, isCombo: false, format: format) {
-                lineBuffers.append(buf)
+        // Pre-render color-specific chimes for each NeonColor
+        for color in NeonColor.allCases {
+            var colorList: [AVAudioPCMBuffer] = []
+            var comboList: [AVAudioPCMBuffer] = []
+            
+            let baseFreq = frequencyForColor(color)
+            let semitone = pow(2.0, 1.0 / 12.0)
+            
+            // Render 5 pitch variations per color for variety
+            for i in 0..<5 {
+                let freq = baseFreq * pow(semitone, Double(i))
+                
+                // Regular Line Clear
+                if let buf = renderChime(frequency: freq, duration: 0.8, isCombo: false, format: format, color: color) {
+                    colorList.append(buf)
+                }
+                
+                // Combo / Rich Arpeggio
+                if let buf = renderChime(frequency: freq, duration: 2.0, isCombo: true, format: format, color: color) {
+                    comboList.append(buf)
+                }
             }
-        }
-        
-        // Render magical Combo sounds (Arpeggiated/Rich chords)
-        for i in 0..<10 {
-            let freq = baseFreq * pow(semitone, Double(i))
-            if let buf = renderChime(frequency: freq, duration: 1.8, isCombo: true, format: format) {
-                comboBuffers.append(buf)
-            }
+            
+            colorBuffers[color] = colorList
+            comboColorBuffers[color] = comboList
         }
 
         do {
@@ -73,6 +80,20 @@ final class SoundManager {
             isReady = true
         } catch {
             print("[SoundManager] start failed: \(error)")
+        }
+    }
+    
+    private func frequencyForColor(_ color: NeonColor) -> Double {
+        switch color {
+        case .ice:    return 1046.50 // C6 (Crystal/Ice)
+        case .cyan:   return 523.25  // C5 (Classic)
+        case .pink:   return 659.25  // E5 (Sweet)
+        case .lime:   return 783.99  // G5 (Energetic)
+        case .yellow: return 587.33  // D5 (Warm)
+        case .purple: return 440.00  // A4 (Deep/Royal)
+        case .blue:   return 493.88  // B4 (Cool)
+        case .orange: return 392.00  // G4 (Warm/Brass)
+        case .red:    return 349.23  // F4 (Resonant/Heavy)
         }
     }
 
@@ -100,14 +121,17 @@ final class SoundManager {
         playBuffer(buf)
     }
 
-    /// Play the tone for `comboLevel` (1-based).
-    func playLineClear(comboLevel: Int) {
+    /// Play the tone for a line clear, optionally specific to a color.
+    func playLineClear(comboLevel: Int, color: NeonColor? = nil) {
         guard isReady else { return }
-        // If combo is 2 or more, use the richer combo buffers
-        let buffers = (comboLevel > 1) ? comboBuffers : lineBuffers
         
-        let idx = max(0, min(comboLevel - 1, 9))
-        guard idx < buffers.count else { return }
+        let targetColor = color ?? .cyan
+        let buffers = (comboLevel > 1) ? comboColorBuffers[targetColor] : colorBuffers[targetColor]
+        
+        guard let buffers = buffers, !buffers.isEmpty else { return }
+        
+        // Pick variation based on combo level (climbing the scale)
+        let idx = max(0, min(comboLevel - 1, buffers.count - 1))
         playBuffer(buffers[idx])
     }
     
@@ -208,19 +232,44 @@ final class SoundManager {
         return buf
     }
     
-    private func renderChime(frequency: Double, duration: Double, isCombo: Bool, format: AVAudioFormat) -> AVAudioPCMBuffer? {
+    private func renderChime(frequency: Double, duration: Double, isCombo: Bool, format: AVAudioFormat, color: NeonColor) -> AVAudioPCMBuffer? {
         let sampleRate = format.sampleRate
         let frameCount = AVAudioFrameCount(sampleRate * duration)
         guard let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }
         buf.frameLength = frameCount
         let ch = buf.floatChannelData![0]
         
+        // Color-specific characteristics
+        let decayMod: Double
+        let harmonicScale: Double
+        
+        switch color {
+        case .ice, .cyan:
+            decayMod = 3.2
+            harmonicScale = 0.25
+        case .pink:
+            decayMod = 2.5
+            harmonicScale = 0.40 // "Sweet" harmonics
+        case .lime:
+            decayMod = 4.5 // Sharp
+            harmonicScale = 0.15
+        case .purple, .blue:
+            decayMod = 2.0 // Long resonance
+            harmonicScale = 0.35
+        case .orange, .yellow:
+            decayMod = 2.8
+            harmonicScale = 0.30
+        case .red:
+            decayMod = 1.8 // Heavy, slow decay
+            harmonicScale = 0.50
+        }
+        
         for f in 0..<Int(frameCount) {
             let t = Double(f) / sampleRate
             
-            // Warmer, softer attack for "sweet" chimes
+            // Warmer, softer attack for "premium" chimes
             let attack = min(1.0, t / 0.012)
-            let decay  = exp(-t * (isCombo ? 1.8 : 3.2))
+            let decay  = exp(-t * (isCombo ? (decayMod * 0.6) : decayMod))
             
             // Subtle vibrato for "premium" feel
             let vibrato = 1.0 + (isCombo ? 0.004 : 0.002) * sin(2.0 * .pi * 5.0 * t)
@@ -229,9 +278,9 @@ final class SoundManager {
             // Warm Sine Base
             let fund = sin(2.0 * .pi * fv * t)
             
-            // Softer, rounder harmonics (no sharp "ting")
-            let h2   = sin(2.0 * .pi * (fv * 2.0) * t) * 0.25 * exp(-t * 6.0)
-            let h3   = sin(2.0 * .pi * (fv * 3.0) * t) * 0.12 * exp(-t * 10.0)
+            // Harmonically varied chimes
+            let h2 = sin(2.0 * .pi * (fv * 2.0) * t) * (harmonicScale) * exp(-t * 6.0)
+            let h3 = sin(2.0 * .pi * (fv * 3.0) * t) * (harmonicScale * 0.5) * exp(-t * 10.0)
             
             var wave = fund + h2 + h3
             

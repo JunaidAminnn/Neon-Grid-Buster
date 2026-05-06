@@ -727,7 +727,7 @@ final class GameScene: SKScene {
         // ── Prompt 4.2: audio cue + screen shake + palette shift ────────
         let currentCombo = scoreManager.combo
         if totalLines > 0 {
-            SoundManager.shared.playLineClear(comboLevel: max(1, currentCombo))
+            SoundManager.shared.playLineClear(comboLevel: max(1, currentCombo), color: trayItem.color)
             screenShake(intensity: currentCombo >= 5 ? 10.0 : 5.0)
             
             // Show thumbs up emoji at the placement origin with matching color

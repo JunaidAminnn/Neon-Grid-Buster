@@ -73,6 +73,7 @@ class TicTacToeViewModel: ObservableObject {
     
     func makeMove(at index: Int) {
         guard board[index] == "" && !gameOver && !showSetup else { return }
+        SoundManager.shared.playClick()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             board[index] = isXTurn ? "X" : "O"
             checkWinner()
@@ -84,6 +85,7 @@ class TicTacToeViewModel: ObservableObject {
         let patterns: [[Int]] = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
         for p in patterns {
             if board[p[0]] != "" && board[p[0]] == board[p[1]] && board[p[0]] == board[p[2]] {
+                SoundManager.shared.playWin()
                 withAnimation {
                     winner = board[p[0]]
                     winIndices = p
