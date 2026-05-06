@@ -143,7 +143,7 @@ struct MainMenuView: View {
                     text:         "BUSTER",
                     color:        Color(red: 1, green: 0, blue: 1),
                     fontSize:     54,
-                    shimmerPhase: globalShimmerPhase - 0.3 // Sequential sweep
+                    shimmerPhase: globalShimmerPhase
                 )
             }
 
@@ -253,8 +253,8 @@ private struct MenuNeonWord: View {
                             .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.7), location: 0.53),
                             .init(color: .clear, location: 1)
                         ],
-                        startPoint: .init(x: shimmerPhase - 0.5, y: 0.5),
-                        endPoint: .init(x: shimmerPhase + 0.5, y: 0.5)
+                        startPoint: .init(x: shimmerPhase - 0.5, y: 0.2),
+                        endPoint: .init(x: shimmerPhase + 0.5, y: 0.8)
                     )
                     .mask(
                         Text(text)
