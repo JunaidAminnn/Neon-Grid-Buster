@@ -459,19 +459,19 @@ private struct SettingsNeonSwitch: View {
     @State private var isPressed = false
 
     private var trackFill: Color {
-        isOn ? Color.white.opacity(0.92) : Color.black.opacity(0.70)
+        isOn ? Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.85) : Color(white: 0.12)
     }
 
     private var trackStroke: Color {
-        isOn ? Color(red: 0, green: 1, blue: 1).opacity(0.85) : Color.white.opacity(0.20)
+        isOn ? Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.5) : Color.white.opacity(0.12)
     }
 
     private var thumbFill: Color {
-        isOn ? .white : .black
+        isOn ? .white : Color(white: 0.40)
     }
 
     private var thumbStroke: Color {
-        isOn ? Color.black.opacity(0.22) : Color.white.opacity(0.55)
+        isOn ? Color.black.opacity(0.10) : Color.white.opacity(0.15)
     }
 
     var body: some View {
@@ -488,7 +488,7 @@ private struct SettingsNeonSwitch: View {
                             .stroke(trackStroke, lineWidth: 2)
                     )
                     .shadow(
-                        color: isOn ? Color(red: 0, green: 1, blue: 1).opacity(0.35) : .clear,
+                        color: isOn ? Color(red: 0.0, green: 0.6, blue: 1.0).opacity(0.35) : .clear,
                         radius: 10,
                         x: 0,
                         y: 0
