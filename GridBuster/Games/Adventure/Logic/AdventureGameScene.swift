@@ -548,7 +548,7 @@ final class AdventureGameScene: SKScene {
         animateClearsFromEngine()
 
         if !clearedGems.isEmpty {
-            SoundManager.shared.playLineClear(comboLevel: max(1, engine.combo), color: tempColor)
+            SoundManager.shared.playLineClear(comboLevel: max(1, engine.combo))
             if hapticsEnabled {
                 heavyImpact.prepare()
                 heavyImpact.impactOccurred()
