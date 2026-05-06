@@ -37,6 +37,7 @@ struct AdventureMapView: View {
     @State private var glowPulse        = false
     @State private var buttonPressed    = false
     @State private var trophyScale: CGFloat = 0.80
+    @State private var globalShimmerPhase: CGFloat = -0.5
 
     // ── Tiger pixel map (11 × 11) — must match AdventureProgressManager ──
     private let tigerPixels = AdventureProgressManager.tigerPixels
@@ -72,6 +73,11 @@ struct AdventureMapView: View {
                 }
                 withAnimation(.spring(response: 0.55, dampingFraction: 0.60)) {
                     trophyScale = 1.0
+                }
+                
+                // Start continuous shimmer
+                withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                    globalShimmerPhase = 1.5
                 }
             }
             // ── When progress changes (level cleared and back to map) ──────
@@ -115,55 +121,56 @@ struct AdventureMapView: View {
     private var topBar: some View {
         HStack {
             Button { dismiss() } label: {
-                HStack(spacing: 10) {
-                    // Inset neon ring for icon
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.black.opacity(0.35))
-                            .frame(width: 34, height: 34)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                            )
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .black))
-                            .foregroundStyle(.white)
-                    }
-                    
-                    Text("MENU")
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .black))
+                    Text("BACK")
                         .font(.system(size: 14, weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.95))
-                        .tracking(3)
+                        .tracking(2)
                 }
-                .padding(.leading, 8)
-                .padding(.trailing, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color(red: 0, green: 1, blue: 1), lineWidth: 2.5)
-                )
-                .shadow(color: Color(red: 0, green: 1, blue: 1).opacity(0.50), radius: 12)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.white.opacity(0.08), in: CapsuledRectangle())
+                .overlay(CapsuledRectangle().stroke(.white.opacity(0.15), lineWidth: 1))
             }
 
             Spacer()
 
-            Text("ADVENTURE")
-                .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.40))
-                .tracking(6)
+            // Settings gear (optional, but good for consistency)
+            Button { /* Could open global settings */ } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 38)
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
     }
 
-    // MARK: - Trophy Section
-
     private var trophySection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
+            // ── Main Title ───────────────────────────────────────────────
+            VStack(spacing: 4) {
+                Text("ADVENTURE")
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .tracking(8)
+
+                MenuNeonWord(
+                    text: "MAP PROGRESS",
+                    color: Color(red: 1, green: 0, blue: 1),
+                    fontSize: 32,
+                    shimmerPhase: globalShimmerPhase
+                )
+                
+                Text("MIDNIGHT EDITION")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.25))
+                    .tracking(4)
+            }
+            .padding(.top, 10)
+
             // ── Trophy icon ───────────────────────────────────────────────
             ZStack {
                 // Glow bloom
@@ -171,38 +178,39 @@ struct AdventureMapView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.30 : 0.14),
+                                Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.35 : 0.15),
                                 .clear
                             ],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 60
+                            endRadius: 80
                         )
                     )
-                    .frame(width: 90, height: 90)
+                    .frame(width: 120, height: 120)
 
                 Image(systemName: progress.anyCompleted ? "trophy.fill" : "trophy")
-                    .font(.system(size: progress.anyCompleted ? 48 : 44, weight: .black))
+                    .font(.system(size: progress.anyCompleted ? 56 : 52, weight: .black))
                     .foregroundStyle(
                         progress.anyCompleted
                         ? LinearGradient(
                             colors: [Color(red: 1, green: 0.95, blue: 0.2),
-                                     Color(red: 1, green: 0.65, blue: 0)],
+                                     Color(red: 1, green: 0.75, blue: 0)],
                             startPoint: .top, endPoint: .bottom
                           )
                         : LinearGradient(
-                            colors: [.white.opacity(0.50), .white.opacity(0.22)],
+                            colors: [.white.opacity(0.4), .white.opacity(0.15)],
                             startPoint: .top, endPoint: .bottom
                           )
                     )
                     .shadow(
                         color: progress.anyCompleted
-                            ? Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.80 : 0.40)
+                            ? Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.90 : 0.50)
                             : Color.white.opacity(0.10),
-                        radius: progress.anyCompleted ? 18 : 4
+                        radius: progress.anyCompleted ? 24 : 6
                     )
             }
             .scaleEffect(trophyScale)
+            .padding(.vertical, 10)
 
             // ── Headline ──────────────────────────────────────────────────
             if progress.anyCompleted {
@@ -210,6 +218,12 @@ struct AdventureMapView: View {
             } else {
                 joinAdventureLabel
             }
+        }
+    }
+
+    private struct CapsuledRectangle: Shape {
+        func path(in rect: CGRect) -> Path {
+            Path(roundedRect: rect, cornerRadius: rect.height / 2)
         }
     }
 

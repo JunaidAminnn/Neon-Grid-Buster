@@ -27,7 +27,6 @@ struct MainMenuView: View {
     
     // shimmer phase
     @State private var globalShimmerPhase: CGFloat = -0.5
-
     // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
         ZStack {
@@ -155,8 +154,6 @@ struct MainMenuView: View {
                 .padding(.top, 6)
         }
     }
-
-
 }
 
 // MARK: - MenuBackground
@@ -206,71 +203,6 @@ private struct MenuBackground: View {
     }
 }
 
-/// Neon glowing word for the menu title with an internal shimmer option.
-private struct MenuNeonWord: View {
-    let text: String
-    let color: Color
-    let fontSize: CGFloat
-    let shimmerPhase: CGFloat
-
-    @State private var pulse = false
-
-    var body: some View {
-        ZStack {
-            // Outer bloom
-            Text(text)
-                .font(.system(size: fontSize, weight: .black, design: .rounded))
-                .foregroundStyle(color)
-                .blur(radius: 30)
-                .opacity(pulse ? 0.80 : 0.42)
-
-            // Mid glow
-            Text(text)
-                .font(.system(size: fontSize, weight: .black, design: .rounded))
-                .foregroundStyle(color)
-                .blur(radius: 12)
-                .opacity(0.65)
-
-            // Tight inner glow
-            Text(text)
-                .font(.system(size: fontSize, weight: .black, design: .rounded))
-                .foregroundStyle(color.opacity(0.55))
-                .blur(radius: 4)
-
-            // Crisp core
-            // Crisp core
-            Text(text)
-                .font(.system(size: fontSize, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-                .shadow(color: color, radius: 10, x: 0, y: 0)
-                .overlay(
-                    // High-Visibility Pink Shimmer (Top Layer)
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.7), location: 0.47),
-                            .init(color: .white.opacity(0.9), location: 0.5),
-                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.7), location: 0.53),
-                            .init(color: .clear, location: 1)
-                        ],
-                        startPoint: .init(x: shimmerPhase - 0.5, y: 0.2),
-                        endPoint: .init(x: shimmerPhase + 0.5, y: 0.8)
-                    )
-                    .mask(
-                        Text(text)
-                            .font(.system(size: fontSize, weight: .black, design: .rounded))
-                    )
-                )
-        }
-        .fixedSize(horizontal: true, vertical: false)
-        .onAppear {
-            // Pulse animation
-            withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
-                pulse = true
-            }
-        }
-    }
-}
 
 // MARK: - MenuArcadeIcon
 

@@ -8,6 +8,7 @@
 //    [ Back arrow ]    [ TARGET HUD — gem icons + counts ] [ Settings gear ]
 //    SpriteKit game board  ←  adventure-aware AdventureGameScene
 //  ─────────────────────────────────────────────────────────────────────────
+//
 
 import SwiftUI
 import SpriteKit
@@ -49,49 +50,55 @@ struct AdventureGameView: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            // ── Background ──────────────────────────────────────────────
-            ArcadeBlueBackgroundView()
+        VStack(spacing: 0) {
+            ZStack {
+                // ── Background ──────────────────────────────────────────────
+                ArcadeBlueBackgroundView()
 
-            // ── SpriteKit Scene ─────────────────────────────────────────
-            if let scene {
-                SpriteView(
-                    scene: scene,
-                    options: [.allowsTransparency, .shouldCullNonVisibleNodes]
-                )
-                .ignoresSafeArea()
-            }
+                // ── SpriteKit Scene ─────────────────────────────────────────
+                if let scene {
+                    SpriteView(
+                        scene: scene,
+                        options: [.allowsTransparency, .shouldCullNonVisibleNodes]
+                    )
+                    .ignoresSafeArea()
+                }
 
-            // ── HUD overlay ─────────────────────────────────────────────
-            VStack(spacing: 0) {
-                adventureHUD
-                Spacer()
-            }
+                // ── HUD overlay ─────────────────────────────────────────────
+                VStack(spacing: 0) {
+                    adventureHUD
+                    Spacer()
+                }
 
-            // ── Level Won overlay ────────────────────────────────────────
-            if engine.isLevelWon {
-                LevelWonOverlay(
-                    levelID:    engine.currentLevel.id,
-                    score:      engine.score,
-                    playAgain:  { restartLevel() },
-                    nextLevel:  { loadNextLevel() },
-                    goHome:     { dismiss() }
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.94)))
-            }
+                // ── Level Won overlay ────────────────────────────────────────
+                if engine.isLevelWon {
+                    LevelWonOverlay(
+                        levelID:    engine.currentLevel.id,
+                        score:      engine.score,
+                        playAgain:  { restartLevel() },
+                        nextLevel:  { loadNextLevel() },
+                        goHome:     { dismiss() }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                }
 
-            // ── Game Over overlay ────────────────────────────────────────
-            if engine.isGameOver && !engine.isLevelWon {
-                AdventureGameOverOverlay(
-                    score:     engine.score,
-                    playAgain: { restartLevel() },
-                    continueGame: { engine.continueAfterAd() },
-                    goHome:    { dismiss() }
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                // ── Game Over overlay ────────────────────────────────────────
+                if engine.isGameOver && !engine.isLevelWon {
+                    AdventureGameOverOverlay(
+                        score:     engine.score,
+                        playAgain: { restartLevel() },
+                        continueGame: { engine.continueAfterAd() },
+                        goHome:    { dismiss() }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                }
             }
+            .padding(.top, 10)
+            
+            // ── Banner Ad at bottom ──────────────────────────────────────
+            BannerAdView()
+                .padding(.bottom, 4)
         }
-        .padding(.top, 10)
         .navigationBarHidden(true)
         .onAppear { setupScene() }
         .onChange(of: hapticsEnabled) { _, v in
@@ -100,15 +107,11 @@ struct AdventureGameView: View {
         .onChange(of: ghostEnabled) { _, v in
             scene?.updateSettings(hapticsEnabled: hapticsEnabled, ghostEnabled: v)
         }
-        // Mark level complete in progress manager the moment the win fires.
-        // This ensures AdventureMapView's tiger fill is updated whether the
-        // player taps Next Level, Play Again, or Main Menu.
         .onChange(of: engine.isLevelWon) { _, won in
             if won {
                 AdventureProgressManager.shared.markComplete(levelID: engine.currentLevel.id)
             }
         }
-        // Animate gem count bumps on change
         .onChange(of: engine.remainingTargets) { _, newTargets in
             for gem in TargetGem.allCases {
                 withAnimation(.spring(response: 0.20, dampingFraction: 0.50)) {
@@ -137,29 +140,18 @@ struct AdventureGameView: View {
 
     private var adventureHUD: some View {
         VStack(spacing: 10) {
-
-            // ── Row 1: Back | Level title | Gear ─────────────────────────
             HStack(alignment: .center, spacing: 0) {
-                // ── Back Button ───────────────────────────────────────
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 26, weight: .bold)) // Slightly larger for clarity
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(12)
                         .contentShape(Rectangle())
                         .shadow(color: .black.opacity(0.4), radius: 4)
                 }
-
                 Spacer()
-
                 Spacer()
-
-                // Removing Level Title as requested
-                // Text(engine.currentLevel.title.uppercased())
-
                 Spacer()
-
-                // ── Settings Button ──────────────────────────────────
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 26, weight: .bold))
@@ -169,24 +161,18 @@ struct AdventureGameView: View {
                         .shadow(color: .black.opacity(0.4), radius: 4)
                 }
             }
-            .padding(.top, 8) // Moved higher as requested (from 28)
-
-            // ── Row 2: Target Gem Tracker ─────────────────────────────────
+            .padding(.top, 8)
             targetTracker
         }
-        .padding(.top, -10) // Moved up 20px (from 10) as requested to avoid grid overlap
+        .padding(.top, -10)
     }
 
-    // MARK: - Target Tracker
-
-    /// The centrepiece of the Adventure HUD.
-    /// Renders one badge per gem type defined in the level's `targets`.
     private var targetTracker: some View {
         let gemOrder: [TargetGem] = TargetGem.allCases.filter {
             engine.currentLevel.targets[$0] != nil
         }
 
-        return HStack(spacing: 42) { // More spacing for centered look
+        return HStack(spacing: 42) {
             ForEach(gemOrder, id: \.self) { gem in
                 TargetGemBadge(
                     gem:       gem,
@@ -196,11 +182,9 @@ struct AdventureGameView: View {
                 )
             }
         }
-        .padding(.top, 2) // Shifted up for better grid clearance
+        .padding(.top, 2)
         .padding(.horizontal, 20)
     }
-
-    // MARK: - Scene Lifecycle
 
     private func setupScene() {
         let s = AdventureGameScene(engine: engine)
@@ -215,13 +199,11 @@ struct AdventureGameView: View {
     }
 
     private func loadNextLevel() {
-        // isLevelWon onChange already called markComplete; no need to repeat.
         let nextID = engine.currentLevel.id + 1
         if AdventureRegistry.level(for: nextID) != nil {
             engine.loadLevel(id: nextID)
             scene?.restartLevel()
         } else {
-            // All levels done — return to map so the player sees the full tiger.
             dismiss()
         }
     }
@@ -229,9 +211,6 @@ struct AdventureGameView: View {
 
 // MARK: - TargetGemBadge
 
-/// A single gem counter badge shown in the Target Tracker HUD.
-/// Displays the gem icon (coloured + glowing), the count below it,
-/// and strikes through / dims when the count reaches 0.
 struct TargetGemBadge: View {
     let gem:       TargetGem
     let remaining: Int
@@ -242,14 +221,11 @@ struct TargetGemBadge: View {
     private var gemSwiftUIColor: Color { Theme.neonColor(gem.neonColor) }
 
     var body: some View {
-        VStack(spacing: 4) { // Tighter spacing for icon-above-number
-
-            // ── Gem icon (exactly mirroring the grid designs) ──────────
+        VStack(spacing: 4) {
             ZStack {
                 GemIconView(gem: gem, size: 40, isCleared: isCleared)
                     .scaleEffect(bumpScale)
                 
-                // Tick overlay when cleared
                 if isCleared {
                     Image(systemName: "checkmark")
                         .font(.system(size: 18, weight: .black))
@@ -259,7 +235,6 @@ struct TargetGemBadge: View {
             }
             .frame(width: 44, height: 44)
 
-            // ── Count ────────────────────────────────────────────────────
             Text("\(remaining)")
                 .font(.system(size: 28, weight: .black, design: .rounded))
                 .foregroundStyle(isCleared ? .white.opacity(0.20) : .white)
@@ -284,16 +259,12 @@ private struct LevelWonOverlay: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.62).ignoresSafeArea()
-
             VStack(spacing: 18) {
-
-                // ── Trophy / Star ─────────────────────────────────────────
                 ZStack {
                     Circle()
                         .fill(Color(red: 1, green: 0.85, blue: 0).opacity(glowPulse ? 0.28 : 0.14))
                         .frame(width: 100, height: 100)
                         .blur(radius: 20)
-
                     Image(systemName: "star.fill")
                         .font(.system(size: 54, weight: .black))
                         .foregroundStyle(
@@ -306,49 +277,36 @@ private struct LevelWonOverlay: View {
                         .shadow(color: Color(red: 1, green: 0.85, blue: 0).opacity(0.90), radius: 20)
                         .scaleEffect(starScale)
                 }
-
-                // ── Title ────────────────────────────────────────────────
                 VStack(spacing: 4) {
                     Text("LEVEL COMPLETE!")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundStyle(.white.opacity(0.96))
                         .shadow(color: Color(red: 1, green: 0.85, blue: 0).opacity(0.55), radius: 10)
                         .tracking(2)
-
                     Text("Level \(levelID) cleared")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.40))
                 }
-
-                // ── Score row ─────────────────────────────────────────────
                 HStack(spacing: 10) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
                         .shadow(color: .white.opacity(0.40), radius: 4)
                         .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.15),
-                                    in: RoundedRectangle(cornerRadius: 10))
-
+                        .background(Color.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
                     Text("SCORE")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.50))
                         .tracking(3)
-
                     Spacer()
-
                     Text("\(score)")
                         .font(.system(size: 20, weight: .black, design: .rounded))
                         .foregroundStyle(.white.opacity(0.96))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.white.opacity(0.05),
-                            in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(red: 0, green: 1, blue: 1).opacity(0.18), lineWidth: 1))
-
-                // ── Buttons ───────────────────────────────────────────────
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(red: 0, green: 1, blue: 1).opacity(0.18), lineWidth: 1))
                 VStack(spacing: 12) {
                     NeonGameOverButton(
                         title:       "Next Level",
@@ -356,7 +314,6 @@ private struct LevelWonOverlay: View {
                         accentColor: Theme.Palette.neonLime.opacity(0.75),
                         glowColor:   Theme.Palette.neonLime
                     ) { nextLevel() }
-
                     NeonGameOverButton(
                         title:       "Main Menu",
                         systemIcon:  "house.fill",
@@ -407,20 +364,16 @@ private struct AdventureGameOverOverlay: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.62).ignoresSafeArea()
-
             VStack(spacing: 16) {
-                // ... (rest of the code remains similar)
                 VStack(spacing: 6) {
                     Text("NO MOVES LEFT")
                         .font(.system(size: 26, weight: .black, design: .rounded))
                         .foregroundStyle(.white.opacity(0.96))
                         .shadow(color: Color(red: 1, green: 0, blue: 0.5).opacity(0.65), radius: 10)
                         .tracking(2)
-
                     Text("The grid is blocked")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.38))
-
                     Rectangle()
                         .fill(
                             LinearGradient(
@@ -432,15 +385,12 @@ private struct AdventureGameOverOverlay: View {
                         .padding(.horizontal, 20)
                         .opacity(0.50)
                 }
-
-                // Score
                 HStack(spacing: 10) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(Color(red: 1, green: 0, blue: 0.5))
                         .frame(width: 36, height: 36)
-                        .background(Color(red: 1, green: 0, blue: 0.5).opacity(0.15),
-                                    in: RoundedRectangle(cornerRadius: 10))
+                        .background(Color(red: 1, green: 0, blue: 0.5).opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
                     Text("SCORE")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.50))
@@ -452,10 +402,7 @@ private struct AdventureGameOverOverlay: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.white.opacity(0.05),
-                            in: RoundedRectangle(cornerRadius: 14))
-
-                // Buttons
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 14))
                 VStack(spacing: 10) {
                     NeonGameOverButton(
                         title:       "Watch Ad",
@@ -464,19 +411,15 @@ private struct AdventureGameOverOverlay: View {
                         glowColor:   Color(red: 0, green: 1, blue: 0)
                     ) {
                         AdsManager.shared.showRewardedAd { earned in
-                            if earned {
-                                continueGame()
-                            }
+                            if earned { continueGame() }
                         }
                     }
-
                     NeonGameOverButton(
                         title:       "Try Again",
                         systemIcon:  "arrow.counterclockwise",
                         accentColor: Color(red: 0, green: 0.60, blue: 1.0),
                         glowColor:   Color(red: 0, green: 1.00, blue: 1.0)
                     ) { playAgain() }
-
                     NeonGameOverButton(
                         title:       "Main Menu",
                         systemIcon:  "house.fill",
@@ -507,10 +450,4 @@ private struct AdventureGameOverOverlay: View {
             .shadow(color: Color(red: 1, green: 0, blue: 0.5).opacity(0.25), radius: 28)
         }
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    AdventureGameView(levelID: 1)
 }

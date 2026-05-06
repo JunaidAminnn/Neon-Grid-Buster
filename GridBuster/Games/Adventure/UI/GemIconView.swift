@@ -45,6 +45,7 @@ struct GemShape: Shape {
             path.closeSubpath()
             
         case .redRuby:
+            // Classic faceted Ruby shape
             path.move(to: CGPoint(x: cx - q, y: cy - h))
             path.addLine(to: CGPoint(x: cx + q, y: cy - h))
             path.addLine(to: CGPoint(x: cx + h, y: cy))
