@@ -18,52 +18,42 @@ class ConsentManager: ObservableObject {
     @Published var consentGatheringComplete: Bool = false
     
     private init() {
-        // UMP manages its own persistence, but we track canRequestAds for UI convenience
-        self.canRequestAds = UMPConsentInformation.sharedInstance.canRequestAds
+        // ConsentInformation manages its own persistence, but we track canRequestAds for UI convenience
+        self.canRequestAds = ConsentInformation.shared.canRequestAds
     }
     
     var userDeniedConsent: Bool {
         // In UMP, we check if we can request ads. If not, it could be denied or not yet gathered.
-        return consentGatheringComplete && !UMPConsentInformation.sharedInstance.canRequestAds
+        return consentGatheringComplete && !ConsentInformation.shared.canRequestAds
     }
     
     func requestConsent(from viewController: UIViewController? = nil, completion: @escaping (String) -> Void) {
-        let parameters = UMPRequestParameters()
-        
-        // For testing in non-EU regions, you can use debug settings:
-        /*
-        let debugSettings = UMPDebugSettings()
-        debugSettings.geography = .EEA
-        debugSettings.testDeviceIdentifiers = ["YOUR_TEST_DEVICE_ID"]
-        parameters.debugSettings = debugSettings
-        */
+        let parameters = RequestParameters()
         
         // tagForUnderAgeOfConsent is handled by UMP automatically or via different params in newer SDKs
         
-        print("UMP: Requesting consent info update...")
-        UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: parameters) { [weak self] error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("UMP: Error updating consent info: \(error.localizedDescription)")
-                completion("Error: \(error.localizedDescription)")
-                return
-            }
-            
-            print("UMP: Consent info updated.")
-            
-            UMPConsentForm.loadAndPresentIfRequired(from: viewController ?? self.getTopViewController()) { [weak self] error in
-                guard let self = self else { return }
+        Task { @MainActor in
+            do {
+                print("UMP: Requesting consent info update...")
+                try await ConsentInformation.shared.requestConsentInfoUpdate(with: parameters)
+                print("UMP: Consent info updated.")
                 
-                if let error = error {
-                    print("UMP: Error loading/presenting form: \(error.localizedDescription)")
-                }
+                let vc = viewController ?? self.getTopViewController()
+                try await ConsentForm.loadAndPresentIfRequired(from: vc)
                 
-                self.canRequestAds = UMPConsentInformation.sharedInstance.canRequestAds
+                self.canRequestAds = ConsentInformation.shared.canRequestAds
                 self.consentGatheringComplete = true
                 
                 print("UMP: Flow complete. Can request ads: \(self.canRequestAds)")
                 completion(self.canRequestAds ? "Consented/NotRequired" : "Denied/Restricted")
+                
+            } catch {
+                print("UMP: Error: \(error.localizedDescription)")
+                
+                // Even on error, update states just in case consent was already gathered previously
+                self.canRequestAds = ConsentInformation.shared.canRequestAds
+                self.consentGatheringComplete = true
+                completion("Error: \(error.localizedDescription)")
             }
         }
     }
@@ -86,7 +76,7 @@ class ConsentManager: ObservableObject {
     
     #if DEBUG
     func resetConsent() {
-        UMPConsentInformation.sharedInstance.reset()
+        ConsentInformation.shared.reset()
         canRequestAds = false
         consentGatheringComplete = false
         print("UMP: Consent RESET for debugging.")

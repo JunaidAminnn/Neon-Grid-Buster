@@ -188,6 +188,12 @@ struct GameView: View {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 20, weight: .black))
                         .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.7)) // Dark blue
+                        .onTapGesture(count: 5) {
+                            #if DEBUG
+                            print("Debug: 5-tap on crown triggered Game Over")
+                            container.scoreManager.isGameOver = true
+                            #endif
+                        }
 
                     Text("\(container.scoreManager.bestScore)")
                         .font(.system(size: 20, weight: .heavy, design: .rounded))
@@ -197,8 +203,8 @@ struct GameView: View {
                 .onTapGesture(count: 3) {
                     #if DEBUG
                     print("Debug: 3-tap on high score triggered Game Over")
-                    #endif
                     container.scoreManager.isGameOver = true
+                    #endif
                 }
 
                 Spacer()
