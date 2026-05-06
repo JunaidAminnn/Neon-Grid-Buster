@@ -243,26 +243,27 @@ private struct MenuNeonWord: View {
                 .font(.system(size: fontSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .shadow(color: color, radius: 10, x: 0, y: 0)
-
-            // High-Visibility Pink Shimmer (Top Layer)
-            // Sweep from top-left to bottom-right across the UnitPoint space
-            LinearGradient(
-                stops: [
-                    .init(color: .clear, location: 0),
-                    .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.4),
-                    .init(color: .white, location: 0.5),
-                    .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.6),
-                    .init(color: .clear, location: 1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .mask(
-                Text(text)
-                    .font(.system(size: fontSize, weight: .black, design: .rounded))
-                    .offset(x: -200 + (400 * shimmerPhase / 2.0)) // Slide the mask/gradient
-            )
-            .blendMode(.plusLighter)
+                .overlay(
+                    // High-Visibility Pink Shimmer (Top Layer)
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.45),
+                            .init(color: .white, location: 0.5),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.8), location: 0.55),
+                            .init(color: .clear, location: 1)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .scaleEffect(x: 3.0, y: 1.0)
+                    .offset(x: -200 + (400 * (shimmerPhase / 2.0))) // Slide the gradient across
+                    .mask(
+                        Text(text)
+                            .font(.system(size: fontSize, weight: .black, design: .rounded))
+                    )
+                    .blendMode(.plusLighter)
+                )
         }
         .fixedSize(horizontal: true, vertical: false)
         .onAppear {
