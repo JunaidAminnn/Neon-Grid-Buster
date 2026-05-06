@@ -4,10 +4,11 @@ import Combine
 
 struct BannerAdView: View {
     let adUnitID: String
-    static let bannerHeight: CGFloat = 50 // Standard adaptive banner height
+    let height: CGFloat
     
-    init(adUnitID: String = AdUnitIDs.bannerGlobal) {
+    init(adUnitID: String = AdUnitIDs.bannerGlobal, height: CGFloat = 45) {
         self.adUnitID = adUnitID
+        self.height = height
     }
 
     @StateObject private var adsManager = AdsManager.shared
@@ -20,9 +21,10 @@ struct BannerAdView: View {
             BannerAdRepresentable(
                 adUnitID: adUnitID,
                 isAdLoaded: $isAdLoaded,
-                canLoadAds: adsManager.shouldRenderAdViews
+                canLoadAds: adsManager.shouldRenderAdViews,
+                height: height
             )
-            .frame(height: BannerAdView.bannerHeight)
+            .frame(height: height)
             .opacity(isAdLoaded ? 1.0 : 0.0)
             
             // Layer 1: The Loading Placeholder (Covers until loaded)
@@ -57,7 +59,7 @@ struct BannerAdView: View {
                 }
             }
         }
-        .frame(height: BannerAdView.bannerHeight)
+        .frame(height: height)
         .background(Color.black)
         .clipped()
     }
@@ -67,6 +69,7 @@ fileprivate struct BannerAdRepresentable: UIViewRepresentable {
     let adUnitID: String
     @Binding var isAdLoaded: Bool
     let canLoadAds: Bool
+    let height: CGFloat
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -124,7 +127,7 @@ fileprivate struct BannerAdRepresentable: UIViewRepresentable {
             banner.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             banner.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             banner.widthAnchor.constraint(equalToConstant: width),
-            banner.heightAnchor.constraint(equalToConstant: BannerAdView.bannerHeight)
+            banner.heightAnchor.constraint(equalToConstant: height)
         ])
         
         banner.load(Request())

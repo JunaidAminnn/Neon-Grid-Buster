@@ -45,7 +45,6 @@ class PortfolioManager: ObservableObject {
     }
     
     func fetchPortfolio() {
-        // If we already have apps, don't show loading unless it's a forced refresh
         if apps.isEmpty { isLoading = true }
         
         let ids = AppConfig.promotedAppIDs.joined(separator: ",")
@@ -56,31 +55,20 @@ class PortfolioManager: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil else {
-                print("[Portfolio] ❌ Fetch error: \(error?.localizedDescription ?? "Unknown")")
-                Task { @MainActor in
-                    self.isLoading = false
-                }
-                return
-            }
-            
+        Task {
             do {
+                let (data, _) = try await URLSession.shared.data(from: url)
                 let result = try JSONDecoder().decode(iTunesLookupResult.self, from: data)
                 
-                Task { @MainActor in
-                    self.apps = result.results
-                    self.saveToCache()
-                    self.isLoading = false
-                    print("[Portfolio] ✅ Fetched \(result.results.count) apps.")
-                }
+                self.apps = result.results
+                self.saveToCache()
+                self.isLoading = false
+                print("[Portfolio] ✅ Fetched \(result.results.count) apps.")
             } catch {
-                print("[Portfolio] ❌ Decode error: \(error)")
-                Task { @MainActor in
-                    self.isLoading = false
-                }
+                print("[Portfolio] ❌ Fetch/Decode error: \(error)")
+                self.isLoading = false
             }
-        }.resume()
+        }
     }
     
     private func saveToCache() {
@@ -99,7 +87,8 @@ class PortfolioManager: ObservableObject {
     }
 }
 
-// Internal Apple models
-private struct iTunesLookupResult: Codable, Sendable {
+// MARK: - Internal Models
+
+struct iTunesLookupResult: Codable, Sendable {
     let results: [PortfolioApp]
 }

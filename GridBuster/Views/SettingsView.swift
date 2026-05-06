@@ -245,13 +245,42 @@ struct SettingsView: View {
     // MARK: - Handlers
 
     private func shareApp() {
-        let text = "Check out Neon Grid Buster! It's an amazing neon-style puzzle game."
+        // TODO: Update this link to the live Neon Grid Buster URL before final release
+        let text = """
+        🎮 Neon Grid Buster
+
+        A premium neon puzzle experience 🧩 with high-contrast visuals and addictive gameplay 🕹️.
+        Vibrant, smart, and competitive.
+
+        👉 Download now and master the neon grid! 😎
+
+        https://apps.apple.com/app/calculator-vault-hide-photos/id6759670222
+        """
+        
         let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(av, animated: true)
+        if let topVC = getTopViewController() {
+            // For iPad compatibility
+            if let popover = av.popoverPresentationController {
+                popover.sourceView = topVC.view
+                popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            topVC.present(av, animated: true)
         }
+    }
+
+    private func getTopViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = windowScene.windows.first?.rootViewController else {
+            return nil
+        }
+        
+        var top = root
+        while let presented = top.presentedViewController {
+            top = presented
+        }
+        return top
     }
 
     private func contactSupport() {

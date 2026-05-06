@@ -248,9 +248,9 @@ private struct MenuNeonWord: View {
                     LinearGradient(
                         stops: [
                             .init(color: .clear, location: 0),
-                            .init(color: .gray.opacity(0.3), location: 0.4),
-                            .init(color: .white.opacity(0.9), location: 0.5),
-                            .init(color: .gray.opacity(0.3), location: 0.6),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.3), location: 0.4),
+                            .init(color: Color(red: 1, green: 0.5, blue: 1).opacity(0.9), location: 0.5),
+                            .init(color: Color(red: 1, green: 0, blue: 1).opacity(0.3), location: 0.6),
                             .init(color: .clear, location: 1)
                         ],
                         startPoint: .init(x: shimmerPhase - 0.8, y: shimmerPhase - 0.8),

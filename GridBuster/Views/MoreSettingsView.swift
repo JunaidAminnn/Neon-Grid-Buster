@@ -61,8 +61,8 @@ struct MoreSettingsView: View {
                         
                         moreAppsSection
                         
-                        adBannerPlaceholder
-                            .padding(.bottom, 20)
+                        // adBannerPlaceholder (Commented out per user request)
+                        //    .padding(.bottom, 20)
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 10)
@@ -310,40 +310,77 @@ struct MoreSettingsView: View {
     }
     
     private func linkRow(title: String, url: String) -> some View {
-        Button {
-            if let targetURL = URL(string: url) {
-                self.safariItem = URLItem(url: targetURL)
-            }
-        } label: {
-            HStack {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.9))
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .black))
-                    .foregroundStyle(.white.opacity(0.8))
-            }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
-            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+        HStack {
+            Text(title)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.9))
+                .onTapGesture {
+                    openSafari(url)
+                }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .black))
+                .foregroundStyle(.white.opacity(0.8))
+                .onTapGesture {
+                    openSafari(url)
+                }
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
+    }
+
+    private func openSafari(_ urlString: String) {
+        if let targetURL = URL(string: urlString) {
+            self.safariItem = URLItem(url: targetURL)
         }
     }
 
     // MARK: - Handlers
     
     private func shareApp() {
-        let text = "Check out Neon Grid Buster! It's an awesome neon-style puzzle game."
+        // TODO: Update this link to the live Neon Grid Buster URL before final release
+        let text = """
+        🎮 Neon Grid Buster
+
+        A premium neon puzzle experience 🧩 with high-contrast visuals and addictive gameplay 🕹️.
+        Vibrant, smart, and competitive.
+
+        👉 Download now and master the neon grid! 😎
+
+        https://apps.apple.com/app/calculator-vault-hide-photos/id6759670222
+        """
+        
         let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(av, animated: true)
+        if let topVC = getTopViewController() {
+            // For iPad compatibility
+            if let popover = av.popoverPresentationController {
+                popover.sourceView = topVC.view
+                popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            topVC.present(av, animated: true)
         }
+    }
+
+    private func getTopViewController() -> UIViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = windowScene.windows.first?.rootViewController else {
+            return nil
+        }
+        
+        var top = root
+        while let presented = top.presentedViewController {
+            top = presented
+        }
+        return top
     }
 
     private func rateApp() {
