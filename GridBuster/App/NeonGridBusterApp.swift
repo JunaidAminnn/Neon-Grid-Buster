@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 import FirebaseCore
+import FirebaseAnalytics
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
@@ -20,6 +21,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             print("Firebase: GoogleService-Info.plist found at \(path)")
             FirebaseApp.configure()
             print("Firebase: Configuration successful. App Name: \(FirebaseApp.app()?.name ?? "Unknown")")
+            
+            // Log manual app launch event
+            Analytics.logEvent(AnalyticsEventAppOpen, parameters: nil)
+            print("Firebase Analytics: App Open event logged.")
         } else {
             print("Firebase ERROR: GoogleService-Info.plist MISSING! Firebase will not work.")
         }

@@ -13,6 +13,7 @@ import SwiftUI
 import SpriteKit
 import Combine
 import UIKit
+import FirebaseAnalytics
 
 // MARK: - GameMode
 
@@ -126,10 +127,12 @@ struct GameView: View {
                     )
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                     .onAppear {
-                        // Show interstitial when Game Over screen appears
-                        print("GameView: Game Over triggered, showing interstitial...")
-                        AdsManager.shared.maybeShowInterstitial {
-                            print("GameView: Interstitial flow finished.")
+                        // Show interstitial when Game Over screen appears (Only for non-classic modes)
+                        if mode != .classic {
+                            print("GameView: Game Over triggered, showing interstitial...")
+                            AdsManager.shared.maybeShowInterstitial {
+                                print("GameView: Interstitial flow finished.")
+                            }
                         }
                     }
                 }
@@ -145,6 +148,12 @@ struct GameView: View {
                 hapticsEnabled: hapticsEnabled,
                 ghostEnabled:   ghostEnabled
             )
+            
+            // Track Screen View with Game Mode
+            Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                AnalyticsParameterScreenName: "Game Screen (\(mode.rawValue))",
+                AnalyticsParameterScreenClass: "GameView"
+            ])
         }
         .onChange(of: hapticsEnabled) { _, v in
             container.scene.updateSettings(hapticsEnabled: v, ghostEnabled: ghostEnabled)

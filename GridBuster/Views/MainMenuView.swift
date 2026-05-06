@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import FirebaseAnalytics
 
 // MARK: - MainMenuView
 
@@ -101,6 +102,12 @@ struct MainMenuView: View {
                 logoVisible    = true
                 buttonsVisible = true
                 glowPulse      = true
+                
+                // Track Screen View
+                Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+                    AnalyticsParameterScreenName: "Main Menu",
+                    AnalyticsParameterScreenClass: "MainMenuView"
+                ])
             }
     }
 
