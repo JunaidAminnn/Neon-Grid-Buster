@@ -137,6 +137,7 @@ struct GameView: View {
                     }
                 }
             }
+            .padding(.top, 10)
             
             // ── Banner Ad at bottom ──────────────────────────────────────
             BannerAdView()
@@ -244,7 +245,7 @@ struct GameView: View {
             .animation(.spring(response: 0.22, dampingFraction: 0.65),
                        value: container.scoreManager.combo)
         }
-        .padding(.top, 8)   // moved up further
+        .padding(.top, 16)
     }
 
     @State private var comboPulseValue = 1.0

@@ -91,6 +91,7 @@ struct AdventureGameView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.94)))
             }
         }
+        .padding(.top, 10)
         .navigationBarHidden(true)
         .onAppear { setupScene() }
         .onChange(of: hapticsEnabled) { _, v in
