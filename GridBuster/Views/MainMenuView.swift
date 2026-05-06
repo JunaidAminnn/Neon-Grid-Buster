@@ -109,8 +109,8 @@ struct MainMenuView: View {
                 // Start shimmer exactly 1 second after appear
                 // Using a range that ensures a clean sweep across the UnitPoint space
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.linear(duration: 3.5).repeatForever(autoreverses: true)) {
-                        globalShimmerPhase = 2.0
+                    withAnimation(.linear(duration: 4.5).repeatForever(autoreverses: false)) {
+                        globalShimmerPhase = 2.2
                     }
                 }
                 
