@@ -4,7 +4,7 @@ import Combine
 
 struct BannerAdView: View {
     let adUnitID: String
-    static let bannerHeight: CGFloat = 72 // Increased for safety
+    static let bannerHeight: CGFloat = 50 // Standard adaptive banner height
     
     init(adUnitID: String = AdUnitIDs.bannerGlobal) {
         self.adUnitID = adUnitID

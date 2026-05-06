@@ -255,7 +255,7 @@ struct SettingsView: View {
     }
 
     private func contactSupport() {
-        let email = "aniqasafdar6@gmail.com"
+        let email = AppConfig.supportEmail
         let subject = "Neon Grid Buster - Support Request"
         let mailto = "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         if let url = URL(string: mailto) {
@@ -264,8 +264,8 @@ struct SettingsView: View {
     }
 
     private func rateApp() {
-        // Placeholder App ID
-        let appId = "0000000000"
+        // App Store ID from AppConfig
+        let appId = AppConfig.appStoreID
         let urlStr = "https://apps.apple.com/app/id\(appId)?action=write-review"
         if let url = URL(string: urlStr) {
             UIApplication.shared.open(url)

@@ -24,6 +24,9 @@ struct MainMenuView: View {
     @State private var logoVisible    = false
     @State private var buttonsVisible = false
     @State private var glowPulse      = false
+    
+    // shimmer phase
+    @State private var globalShimmerPhase: CGFloat = -1.2
 
     // ── Body ─────────────────────────────────────────────────────────────
     var body: some View {
@@ -103,6 +106,14 @@ struct MainMenuView: View {
                 buttonsVisible = true
                 glowPulse      = true
                 
+                // Start shimmer exactly 1 second after appear
+                // Using a range that ensures a clean sweep across the UnitPoint space
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: false)) {
+                        globalShimmerPhase = 2.0
+                    }
+                }
+                
                 // Track Screen View
                 Analytics.logEvent(AnalyticsEventScreenView, parameters: [
                     AnalyticsParameterScreenName: "Main Menu",
@@ -119,19 +130,22 @@ struct MainMenuView: View {
             MenuArcadeIcon()
                 .padding(.bottom, 10)
 
-            // "NEON GRID" — cyan #00FFFF
-            MenuNeonWord(
-                text:     "NEON GRID",
-                color:    Color(red: 0, green: 1, blue: 1),
-                fontSize: 42
-            )
+            // Unified Title Block
+            VStack(spacing: 6) {
+                MenuNeonWord(
+                    text:         "NEON GRID",
+                    color:        Color(red: 0, green: 1, blue: 1),
+                    fontSize:     42,
+                    shimmerPhase: globalShimmerPhase
+                )
 
-            // "BUSTER" — hot pink #FF00FF
-            MenuNeonWord(
-                text:     "BUSTER",
-                color:    Color(red: 1, green: 0, blue: 1),
-                fontSize: 54
-            )
+                MenuNeonWord(
+                    text:         "BUSTER",
+                    color:        Color(red: 1, green: 0, blue: 1),
+                    fontSize:     54,
+                    shimmerPhase: globalShimmerPhase - 0.3 // Sequential sweep
+                )
+            }
 
             // "MIDNIGHT EDITION" sub-label
             Text("MIDNIGHT EDITION")
@@ -192,16 +206,14 @@ private struct MenuBackground: View {
     }
 }
 
-// MARK: - MenuNeonWord
-
-/// Neon glowing word for the menu title with a continuous diagonal shine effect.
+/// Neon glowing word for the menu title with an internal shimmer option.
 private struct MenuNeonWord: View {
     let text: String
     let color: Color
     let fontSize: CGFloat
+    let shimmerPhase: CGFloat
 
     @State private var pulse = false
-    @State private var shineOffset: CGFloat = -1.2 // Start further left
 
     var body: some View {
         ZStack {
@@ -225,41 +237,30 @@ private struct MenuNeonWord: View {
                 .foregroundStyle(color.opacity(0.55))
                 .blur(radius: 4)
 
-            // Crisp core with Shine Overlay
+            // Crisp core
             Text(text)
                 .font(.system(size: fontSize, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .shadow(color: color,               radius: 10, x: 0, y: 0)
-                .shadow(color: color.opacity(0.55), radius: 24, x: 0, y: 0)
                 .overlay(
-                    GeometryReader { geo in
-                        // The Silver Shine: A narrow, bright diagonal beam
-                        ZStack {
-                            Rectangle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            .clear,
-                                            .white.opacity(0.1),
-                                            .white.opacity(0.95), // Bright Peak
-                                            .white.opacity(0.1),
-                                            .clear
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: geo.size.width * 0.3) // Narrow shine beam
-                                .rotationEffect(.degrees(25))
-                                // Move from top-left to bottom-right
-                                .offset(x: -geo.size.width + (shineOffset * geo.size.width * 2.5),
-                                        y: -geo.size.height + (shineOffset * geo.size.height * 2.5))
-                        }
-                        .mask(
-                            Text(text)
-                                .font(.system(size: fontSize, weight: .black, design: .rounded))
-                        )
-                    }
+                    // Silver Shimmer directly on the text core using UnitPoint sweep
+                    // This avoids GeometryReader coordinate issues
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .gray.opacity(0.3), location: 0.4),
+                            .init(color: .white.opacity(0.9), location: 0.5),
+                            .init(color: .gray.opacity(0.3), location: 0.6),
+                            .init(color: .clear, location: 1)
+                        ],
+                        startPoint: .init(x: shimmerPhase - 0.8, y: shimmerPhase - 0.8),
+                        endPoint: .init(x: shimmerPhase + 0.2, y: shimmerPhase + 0.2)
+                    )
+                    .mask(
+                        Text(text)
+                            .font(.system(size: fontSize, weight: .black, design: .rounded))
+                    )
+                    .blendMode(.screen)
                 )
         }
         .fixedSize(horizontal: true, vertical: false)
@@ -267,12 +268,6 @@ private struct MenuNeonWord: View {
             // Pulse animation
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
                 pulse = true
-            }
-            
-            // Continuous Silver Shine animation
-            // Reset and loop every 3 seconds for high visibility
-            withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
-                shineOffset = 1.0
             }
         }
     }

@@ -24,6 +24,9 @@ struct MoreSettingsView: View {
     @State private var borderPulse  = false
     @State private var panelVisible = false
     @State private var safariItem:  URLItem? = nil
+    @StateObject private var portfolioManager = PortfolioManager.shared
+    @StateObject private var adsManager       = AdsManager.shared
+    @State private var selectedAppID: String? = nil
 
     struct URLItem: Identifiable {
         let id = UUID()
@@ -31,7 +34,6 @@ struct MoreSettingsView: View {
     }
 
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let placeholderURL = "https://docs.google.com/spreadsheets/d/1" // Placeholder Google Sheet
 
     // MARK: - Body
 
@@ -56,6 +58,8 @@ struct MoreSettingsView: View {
                         neonDivider.padding(.vertical, 8)
                         
                         linksBlock
+                        
+                        moreAppsSection
                         
                         adBannerPlaceholder
                             .padding(.bottom, 20)
@@ -84,6 +88,23 @@ struct MoreSettingsView: View {
             SafariView(url: item.url)
                 .ignoresSafeArea()
         }
+        .onAppear {
+            portfolioManager.fetchPortfolio()
+        }
+        .background(
+            ZStack {
+                if let id = selectedAppID {
+                    StoreKitView(appID: id)
+                        .frame(width: 0, height: 0)
+                        .onAppear {
+                            // Reset selection after a short delay so it can be re-triggered
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                selectedAppID = nil
+                            }
+                        }
+                }
+            }
+        )
         .navigationBarHidden(true)
     }
 
@@ -236,10 +257,54 @@ struct MoreSettingsView: View {
         VStack(spacing: 10) {
             moreLabel("UTILITIES & LEGAL")
             
-            linkRow(title: "About Us", url: placeholderURL)
-            linkRow(title: "Terms & Policy", url: placeholderURL)
-            linkRow(title: "Privacy Policy", url: placeholderURL)
-            linkRow(title: "Terms of Use", url: placeholderURL)
+            linkRow(title: "About Us", url: AppConfig.aboutUsURL)
+            linkRow(title: "Terms and Conditions", url: AppConfig.termsAndConditionsURL)
+            linkRow(title: "Privacy Policy", url: AppConfig.privacyPolicyURL)
+            linkRow(title: "Terms of Use", url: AppConfig.termsOfUseURL)
+        }
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - More Apps Section
+
+    private var moreAppsSection: some View {
+        VStack(spacing: 12) {
+            moreLabel("MORE APPS")
+            
+            if portfolioManager.isLoading && portfolioManager.apps.isEmpty {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .tint(Color(red: 0, green: 1, blue: 1))
+                    Text("FETCHING NEW RELEASES...")
+                        .font(.system(size: 10, weight: .black, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.3))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 30)
+            } else {
+                VStack(spacing: 10) {
+                    // Prioritize Calculator Vault Pro (6759670222) at the top
+                    let displayApps = portfolioManager.apps.sorted { app1, app2 in
+                        if String(app1.id) == "6759670222" { return true }
+                        if String(app2.id) == "6759670222" { return false }
+                        return false
+                    }
+                    
+                    if displayApps.isEmpty {
+                        Text("CHECK BACK LATER FOR UPDATES")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.3))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                    } else {
+                        ForEach(displayApps) { app in
+                            PromotedAppRow(app: app) {
+                                selectedAppID = String(app.id)
+                            }
+                        }
+                    }
+                }
+            }
         }
         .padding(.vertical, 10)
     }
@@ -257,7 +322,7 @@ struct MoreSettingsView: View {
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .black))
-                    .foregroundStyle(Color(red: 1, green: 0, blue: 1).opacity(0.5))
+                    .foregroundStyle(.white.opacity(0.8))
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 16)
@@ -282,8 +347,7 @@ struct MoreSettingsView: View {
     }
 
     private func rateApp() {
-        // Placeholder App Store ID (replace with your real one)
-        let appId = "0000000000"
+        let appId = AppConfig.appStoreID
 
         if let url = URL(string: "itms-apps://itunes.apple.com/app/id\(appId)?action=write-review") {
             openURL(url)
@@ -306,29 +370,22 @@ struct MoreSettingsView: View {
         return nil
     }
 
-    // MARK: - Ad Banner Placeholder
-
     private var adBannerPlaceholder: some View {
-        VStack(spacing: 8) {
-            moreLabel("SPONSOR")
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-                            .foregroundStyle(Color.white.opacity(0.15))
-                    )
-
-                Text("AD SPACE")
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.15))
+        Group {
+            if adsManager.shouldRenderAdViews {
+                VStack(spacing: 8) {
+                    moreLabel("SPONSOR")
+                    
+                    BannerAdView(adUnitID: AdUnitIDs.bannerGlobal)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1.5)
+                        )
+                }
+                .padding(.top, 10)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
         }
-        .padding(.top, 10)
     }
 
     // MARK: - Section Label Helper
