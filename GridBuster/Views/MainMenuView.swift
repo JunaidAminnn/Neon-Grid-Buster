@@ -19,6 +19,7 @@ struct MainMenuView: View {
     @State private var adventurePress = false
     @State private var classicPress   = false
     @State private var moreGamesPress = false
+    @State private var removeAdsPress = false
 
     // entrance animations
     @State private var logoVisible    = false
@@ -89,6 +90,18 @@ struct MainMenuView: View {
                                 )
                             }
                             .buttonStyle(ScaleButtonStyle(isPressed: $moreGamesPress))
+                            
+                            // Remove Ads button → PremiumSubscriptionView
+                            NavigationLink(destination: PremiumSubscriptionView()) {
+                                ModeButton(
+                                    title:      "Remove Ads",
+                                    systemIcon: "star.slash.fill",
+                                    accentColor: Color(red: 1.0, green: 0.8, blue: 0.0),    // Yellow/Gold
+                                    glowColor:   Color(red: 1.0, green: 0.8, blue: 0.0),
+                                    isPressed:   removeAdsPress
+                                )
+                            }
+                            .buttonStyle(ScaleButtonStyle(isPressed: $removeAdsPress))
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, geo.size.height * 0.15)

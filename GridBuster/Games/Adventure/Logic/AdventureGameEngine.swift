@@ -161,12 +161,11 @@ final class AdventureGameEngine: ObservableObject {
         let pending = remainingTargets.filter { $0.value > 0 }
         guard !pending.isEmpty else { return nil }
 
-        // 30 % chance to embed a gem
-        guard Double.random(in: 0..<1) < 0.30 else { return nil }
+        // 35 % chance to embed a gem (increased from 30% for better engagement)
+        guard Double.random(in: 0..<1) < 0.35 else { return nil }
 
-        // Pick the gem type with the most remaining (or random among ties)
-        let sorted = pending.sorted { $0.value > $1.value }
-        return sorted.first?.key
+        // Randomly pick from ANY pending gem types to offer variety in the tray
+        return pending.keys.randomElement()
     }
 
     // MARK: - Move Application

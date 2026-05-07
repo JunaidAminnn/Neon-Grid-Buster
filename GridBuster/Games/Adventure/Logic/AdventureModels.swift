@@ -122,57 +122,57 @@ enum AdventureRegistry {
             id: 2,
             title: "Level 2",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 3, col: 7): .emerald, GridPoint(row: 1, col: 1): .emerald, GridPoint(row: 4, col: 6): .emerald, GridPoint(row: 4, col: 4): .emerald, GridPoint(row: 0, col: 0): .emerald, GridPoint(row: 1, col: 6): .emerald]),
-            targets: [.emerald: 6]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 3, col: 7): .star, GridPoint(row: 1, col: 1): .star, GridPoint(row: 4, col: 6): .star, GridPoint(row: 4, col: 4): .star, GridPoint(row: 0, col: 0): .star, GridPoint(row: 1, col: 6): .star]),
+            targets: [.star: 6]
         ),
         AdventureLevel(
             id: 3,
             title: "Level 3",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 7, col: 6): .emerald, GridPoint(row: 0, col: 2): .emerald, GridPoint(row: 0, col: 7): .emerald, GridPoint(row: 2, col: 5): .emerald, GridPoint(row: 5, col: 1): .emerald, GridPoint(row: 5, col: 2): .emerald]),
-            targets: [.emerald: 6]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 7, col: 6): .emerald, GridPoint(row: 0, col: 2): .emerald, GridPoint(row: 0, col: 7): .emerald, GridPoint(row: 2, col: 5): .star, GridPoint(row: 5, col: 1): .star, GridPoint(row: 5, col: 2): .star]),
+            targets: [.emerald: 3, .star: 3]
         ),
         AdventureLevel(
             id: 4,
             title: "Level 4",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 6, col: 4): .emerald, GridPoint(row: 0, col: 6): .emerald, GridPoint(row: 5, col: 1): .emerald, GridPoint(row: 5, col: 0): .emerald, GridPoint(row: 3, col: 4): .emerald, GridPoint(row: 4, col: 6): .emerald, GridPoint(row: 6, col: 0): .emerald]),
-            targets: [.emerald: 7]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 6, col: 4): .orangePentagon, GridPoint(row: 0, col: 6): .orangePentagon, GridPoint(row: 5, col: 1): .orangePentagon, GridPoint(row: 5, col: 0): .orangePentagon, GridPoint(row: 3, col: 4): .orangePentagon, GridPoint(row: 4, col: 6): .orangePentagon, GridPoint(row: 6, col: 0): .orangePentagon]),
+            targets: [.orangePentagon: 7]
         ),
         AdventureLevel(
             id: 5,
             title: "Level 5",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 5, col: 6): .emerald, GridPoint(row: 2, col: 4): .emerald, GridPoint(row: 4, col: 4): .emerald, GridPoint(row: 4, col: 3): .emerald, GridPoint(row: 7, col: 7): .emerald, GridPoint(row: 0, col: 4): .emerald, GridPoint(row: 1, col: 2): .emerald]),
-            targets: [.emerald: 7]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 5, col: 6): .emerald, GridPoint(row: 2, col: 4): .emerald, GridPoint(row: 4, col: 4): .emerald, GridPoint(row: 4, col: 3): .orangePentagon, GridPoint(row: 7, col: 7): .orangePentagon, GridPoint(row: 0, col: 4): .orangePentagon, GridPoint(row: 1, col: 2): .orangePentagon]),
+            targets: [.emerald: 3, .orangePentagon: 4]
         ),
         AdventureLevel(
             id: 6,
             title: "Level 6",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 7, col: 2): .emerald, GridPoint(row: 5, col: 1): .emerald, GridPoint(row: 6, col: 0): .emerald, GridPoint(row: 5, col: 0): .emerald, GridPoint(row: 7, col: 4): .emerald, GridPoint(row: 4, col: 7): .emerald, GridPoint(row: 6, col: 4): .emerald, GridPoint(row: 1, col: 5): .emerald]),
-            targets: [.emerald: 8]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 7, col: 2): .blueSapphire, GridPoint(row: 5, col: 1): .blueSapphire, GridPoint(row: 6, col: 0): .blueSapphire, GridPoint(row: 5, col: 0): .blueSapphire, GridPoint(row: 7, col: 4): .blueSapphire, GridPoint(row: 4, col: 7): .blueSapphire, GridPoint(row: 6, col: 4): .blueSapphire, GridPoint(row: 1, col: 5): .blueSapphire]),
+            targets: [.blueSapphire: 8]
         ),
         AdventureLevel(
             id: 7,
             title: "Level 7",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 1, col: 2): .emerald, GridPoint(row: 5, col: 2): .emerald, GridPoint(row: 4, col: 3): .emerald, GridPoint(row: 5, col: 4): .emerald, GridPoint(row: 4, col: 0): .emerald, GridPoint(row: 0, col: 6): .emerald, GridPoint(row: 6, col: 7): .emerald, GridPoint(row: 5, col: 1): .emerald]),
-            targets: [.emerald: 8]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 1, col: 2): .emerald, GridPoint(row: 5, col: 2): .emerald, GridPoint(row: 4, col: 3): .emerald, GridPoint(row: 5, col: 4): .emerald, GridPoint(row: 4, col: 0): .blueSapphire, GridPoint(row: 0, col: 6): .blueSapphire, GridPoint(row: 6, col: 7): .blueSapphire, GridPoint(row: 5, col: 1): .blueSapphire]),
+            targets: [.emerald: 4, .blueSapphire: 4]
         ),
         AdventureLevel(
             id: 8,
             title: "Level 8",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 4, col: 6): .emerald, GridPoint(row: 6, col: 4): .emerald, GridPoint(row: 2, col: 5): .emerald, GridPoint(row: 1, col: 4): .emerald, GridPoint(row: 2, col: 3): .emerald, GridPoint(row: 1, col: 6): .emerald, GridPoint(row: 1, col: 5): .emerald, GridPoint(row: 2, col: 1): .emerald, GridPoint(row: 0, col: 5): .emerald]),
-            targets: [.emerald: 9]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 4, col: 6): .redRuby, GridPoint(row: 6, col: 4): .redRuby, GridPoint(row: 2, col: 5): .redRuby, GridPoint(row: 1, col: 4): .redRuby, GridPoint(row: 2, col: 3): .redRuby, GridPoint(row: 1, col: 6): .redRuby, GridPoint(row: 1, col: 5): .redRuby, GridPoint(row: 2, col: 1): .redRuby, GridPoint(row: 0, col: 5): .redRuby]),
+            targets: [.redRuby: 9]
         ),
         AdventureLevel(
             id: 9,
             title: "Level 9",
             subtitle: "Difficulty 1",
-            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 5, col: 0): .emerald, GridPoint(row: 6, col: 5): .emerald, GridPoint(row: 0, col: 0): .emerald, GridPoint(row: 7, col: 2): .emerald, GridPoint(row: 2, col: 7): .emerald, GridPoint(row: 5, col: 7): .emerald, GridPoint(row: 1, col: 6): .emerald, GridPoint(row: 4, col: 2): .emerald, GridPoint(row: 5, col: 1): .emerald]),
-            targets: [.emerald: 9]
+            initialGrid: buildGrid(gemPlacements: [GridPoint(row: 5, col: 0): .emerald, GridPoint(row: 6, col: 5): .emerald, GridPoint(row: 0, col: 0): .emerald, GridPoint(row: 7, col: 2): .emerald, GridPoint(row: 2, col: 7): .redRuby, GridPoint(row: 5, col: 7): .redRuby, GridPoint(row: 1, col: 6): .redRuby, GridPoint(row: 4, col: 2): .redRuby, GridPoint(row: 5, col: 1): .redRuby]),
+            targets: [.emerald: 4, .redRuby: 5]
         ),
         AdventureLevel(
             id: 10,

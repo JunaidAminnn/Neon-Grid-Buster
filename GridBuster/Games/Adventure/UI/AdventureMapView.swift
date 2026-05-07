@@ -55,7 +55,7 @@ struct AdventureMapView: View {
 
                 VStack(spacing: 0) {
                     topBar
-                    Spacer(minLength: 10)
+                    Spacer(minLength: 4)
                     trophySection
                     Spacer(minLength: 14)
                     tigerGridSection
@@ -121,31 +121,18 @@ struct AdventureMapView: View {
     private var topBar: some View {
         HStack {
             Button { dismiss() } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .black))
-                    Text("BACK")
-                        .font(.system(size: 14, weight: .black, design: .rounded))
-                        .tracking(2)
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(.white.opacity(0.08), in: CapsuledRectangle())
-                .overlay(CapsuledRectangle().stroke(.white.opacity(0.15), lineWidth: 1))
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundStyle(.white)
+                    .frame(width: 42, height: 42)
+                    .background(.white.opacity(0.08), in: Circle())
+                    .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 1))
             }
 
             Spacer()
-
-            // Settings gear (optional, but good for consistency)
-            Button { /* Could open global settings */ } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.8))
-            }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 20)
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
     }
 
     private var trophySection: some View {
@@ -169,7 +156,7 @@ struct AdventureMapView: View {
                     .foregroundStyle(.white.opacity(0.25))
                     .tracking(4)
             }
-            .padding(.top, 10)
+            .padding(.top, 0)
 
             // ── Trophy icon ───────────────────────────────────────────────
             ZStack {
